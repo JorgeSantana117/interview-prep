@@ -1,0 +1,8 @@
+# Archivos del sistema y del editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Datos personales: descomenta si subes el repositorio a una plataforma que no sea privada
+# 1-perfil/
+# 5-postulaciones/
