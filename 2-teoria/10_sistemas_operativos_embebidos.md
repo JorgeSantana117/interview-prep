@@ -1,6 +1,6 @@
 # Capítulo: Sistemas Operativos Embebidos
 
-> Objetivo del capítulo: entender **qué hace el sistema operativo dentro de una ECU o un controlador de dominio**, cómo se diferencian un RTOS, Linux embebido y QNX, cómo se planifican las tareas, cómo se comunican los procesos, cómo arranca el sistema y, sobre todo, **cómo se depura un problema a nivel de sistema**. Este capítulo es el más cercano a tu rol actual en Bosch (QNX, Qualcomm, debugging de infotainment).
+> Objetivo del capítulo: al terminar podrás (1) explicar qué significa "tiempo real" (determinismo, no velocidad) y aplicar Rate Monotonic, la cota de Liu-Layland y el análisis de tiempo de respuesta a un conjunto de tareas dado; (2) distinguir mutex de semáforo y explicar la inversión de prioridades con sus dos mitigaciones; (3) describir la arquitectura de microkernel de QNX (IPC por mensajes, resource managers) frente a un kernel monolítico como Linux; (4) caminar por la secuencia de arranque de una ECU AUTOSAR y de un SoC con Linux/QNX, incluido el secure boot; y (5) aplicar un flujo de diagnóstico reutilizable (preservar evidencia → correlacionar tiempos → clasificar el fallo → hipótesis) ante un síntoma de sistema en HIL. Es el capítulo más cercano a tu rol actual en Bosch (QNX, Qualcomm, debugging de infotainment).
 >
 > **Límites con otros capítulos (para no repetir):**
 > - Hardware, interrupciones a nivel de CPU, memoria física, periféricos → ya en *Sistemas Embebidos*. Aquí se ve cómo el SO los usa y los abstrae.
@@ -273,3 +273,61 @@ Ante un fallo en una prueba HIL (por ejemplo, un proceso se reinicia o el sistem
 - Diagnosticar un fallo de timing con *breakpoints* en lugar de trazas.
 - Ignorar la causa del último reset (watchdog, brown-out, panic) al investigar reinicios.
 - Olvidar que la memoria dinámica y la fragmentación pueden romper el determinismo en sistemas de larga operación.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar. (Para cálculos de planificabilidad y mapeo síntoma→causa, usa también los bloques "Ejercicios de práctica" y "Del síntoma a la causa probable" de arriba — no se repiten aquí.)
+
+### 1. Qué hace un SO embebido
+- Planificación, gestión de memoria, IPC/sincronización, acceso a hardware, gestión de tiempo, servicios de sistema.
+- 3 niveles: bare-metal/super-loop (simple) → RTOS (determinista, ECUs de control) → SO de propósito amplio (Linux/QNX/Android, infotainment/ADAS).
+
+### 2. Tiempo real y planificación
+- Tiempo real = **predecible**, no rápido; hard (frenos) / firm / soft (UI).
+- RM: mayor prioridad a menor periodo (óptimo entre esquemas de prioridad fija); EDF: prioridad dinámica por plazo más cercano (hasta 100% de utilización teórica, más complejo de analizar).
+- Cota de Liu-Layland (`U ≤ n(2^(1/n)−1)`, ≈0.78 para n=3, →0.69 cuando n crece) es **suficiente, no necesaria** — superarla no implica fallo; el análisis de tiempo de respuesta (RTA) es más preciso.
+- Mutex (propietario, exclusión mutua) ≠ semáforo (sin propietario, señalización) — confundirlos es un error clásico de entrevista.
+- La inversión de prioridades se mitiga con herencia de prioridades o techo de prioridad (caso clásico: Mars Pathfinder).
+
+### 3. OSEK/AUTOSAR OS
+- Configuración estática (tareas/alarmas/recursos/prioridades fijas en tiempo de config) → SO pequeño, determinista y analizable.
+- Tareas básicas (sin esperar eventos) vs extendidas; ISR categoría 1 (sin servicios del SO) vs categoría 2 (con servicios).
+- Clases de escalabilidad SC1–SC4: SC3/SC4 añaden protección de tiempo y memoria (vía MPU) — habilita mezclar software de distinto ASIL en un mismo núcleo.
+
+### 4. Linux embebido
+- Monolítico + módulos, MMU, Device Tree describe el hardware al kernel sin recompilarlo.
+- No es tiempo real duro por defecto; PREEMPT_RT lo hace más apropiativo (medido con `cyclictest`) — no está certificado nativamente para ASIL.
+- Herramientas habituales: `dmesg`/`journalctl`, `strace`, `gdb`, `perf`/`ftrace`, `/proc`, core dumps.
+
+### 5. QNX
+- Microkernel (solo planificación, IPC, interrupciones, temporizadores); todo lo demás corre como procesos en espacio de usuario — un driver que falla se reinicia sin tumbar el sistema.
+- IPC nativo por mensajes síncronos (`MsgSend`/`MsgReceive`/`MsgReply`); resource managers exponen un servicio como una entrada de archivos (`open`/`read`/`write`); herencia de prioridad en el IPC.
+- El Adaptive Partitioning Scheduler (APS) reserva un % de CPU por grupo de procesos — aislamiento temporal.
+
+### 6. Hipervisores
+- Hipervisor tipo 1 + particiones = consolidar cómputo y aislar criticidad mixta (ej. SO de seguridad + Android en el mismo SoC).
+- Retos: freedom from interference de tiempo/memoria, reparto de periféricos, comunicación entre particiones — un síntoma puede originarse en el invitado, el hipervisor o el reparto de recursos.
+
+### 7. Gestión de memoria en el SO
+- RTOS en MCU: espacio plano (MPU opcional), memoria evitada o en pools de tamaño fijo — fallos típicos: corrupción por desbordamiento de pila/buffer.
+- SO con MMU: espacio virtual por proceso, `malloc` disponible con riesgo de fragmentación — fallos típicos: segmentation fault, fugas de memoria, OOM killer.
+
+### 8. Drivers, BSP y HAL
+- BSP = bootloader + drivers + configuración + herramientas de una placa/SoC concreto; lo entrega el proveedor del SoC (ej. Qualcomm) o del SO (ej. QNX).
+- Delimitar si un síntoma pertenece a aplicación/SO/driver/BSP/hardware es justo lo que hace útil un reporte técnico a los equipos de plataforma.
+
+### 9. Proceso de arranque
+- AUTOSAR Classic: reset → startup (copia `.data`, limpia `.bss`) → bootloader (verifica integridad, decide modo de reprogramación) → EcuM/BswM inicializan BSW y SO → aplicación.
+- SoC con Linux/QNX: boot ROM → bootloaders por etapas (SPL/U-Boot o IPL/startup) → kernel → servicios/drivers → aplicaciones/HMI.
+- Secure boot: cada etapa verifica criptográficamente (con un HSM) la firma de la siguiente antes de ejecutarla.
+
+### 10. Depuración a nivel de sistema
+- Fuentes: logs, core dumps (requieren binario + símbolos del build exacto), trazas del kernel, métricas de recursos, causa del último reset, trazas de bus correlacionadas por tiempo.
+- Flujo reutilizable: describir el síntoma → preservar evidencia (antes de reiniciar) → correlacionar tiempos → clasificar (crash / congelamiento / degradación / reinicio) → analizar el volcado → medir recursos → reproducir de forma determinista → hipótesis + cambio mínimo → escalar con evidencia.
+
+### 11. Comparación de plataformas
+- Determinismo decreciente: AUTOSAR OS > QNX/RTOS > Linux (mejora con PREEMPT_RT) > Android (blando).
+- Aislamiento: MMU (Linux/QNX/Android, un fallo no corrompe a otros procesos) vs MPU opcional (AUTOSAR OS/RTOS).
+
+### 12. Síntoma → causa (nivel SO)
+- La tabla de este capítulo (segmentation fault, lentitud progresiva, congelamiento, reinicio sin crash...) complementa la de Sistemas Embebidos — una apunta a causas de software/SO, la otra a causas de hardware.

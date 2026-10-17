@@ -1,6 +1,6 @@
 # Tema: Fundamentos de Software Testing (ISTQB CTFL 4.0)
 
-> Material de estudio base: capítulo `04_fundamentos_software_testing.md`. Mismo formato que los bancos anteriores: preguntas por rol, con los puntos que el entrevistador espera escuchar. Construye tu respuesta con tus palabras y, siempre que puedas, con un ejemplo real de Bosch, ALTEN, VW o Ford.
+> Material de estudio base: capítulo `03_fundamentos_software_testing.md`. Mismo formato que los bancos anteriores: preguntas por rol, con los puntos que el entrevistador espera escuchar. Construye tu respuesta con tus palabras y, siempre que puedas, con un ejemplo real de Bosch, ALTEN, VW o Ford.
 
 > Estructura recomendada para responder:
 > - *Concepto:* definición breve → por qué importa → ejemplo propio → limitación o trade-off.

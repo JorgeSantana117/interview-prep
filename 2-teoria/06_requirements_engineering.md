@@ -1,41 +1,10 @@
 # Capítulo: Requirements Engineering
 
-> Objetivo del capítulo: este es un tema donde ya tienes experiencia de herramienta (DOORS/RQM, Jira, Confluence) y ahora también una base formal de un curso de Requirements Engineering (con enfoque INCOSE/Systems Engineering). Este capítulo integra ambas cosas: el vocabulario formal de la disciplina (necesidades vs requisitos, los 4 procesos de RE, las 9 características de un buen requisito, los métodos de verificación) con tu experiencia práctica en automotriz. El objetivo es que puedas hablar de "análisis de requisitos" con el mismo rigor con el que ya hablas de protocolos o HIL.
+> Objetivo del capítulo: al terminar podrás (1) distinguir necesidad de requisito y explicar el flujo completo de elicitación a nivel stakeholder; (2) auditar un requisito real contra las 9 características INCOSE e identificar "requirement smells" concretos (adverbios vagos, requisitos compuestos, universales sin excepción); (3) elegir el método de verificación correcto para un requisito dado — Inspección, Análisis, Demostración o Prueba — en vez de asumir que todo se valida en HIL; y (4) explicar la cadena de trazabilidad stakeholder → sistema → subsistema → software y por qué ASPICE la audita como requisito de proceso. Integra tu experiencia de herramienta (DOORS/RQM, Jira, Confluence) con el marco formal INCOSE/Systems Engineering de tu curso — el objetivo es hablar de "análisis de requisitos" con el mismo rigor con el que ya hablas de protocolos o HIL. Pesa para los cuatro roles, con más peso en **TFL/TM** (trazabilidad, gestión de cambios, auditoría ASPICE).
 
 ---
 
-## 0. Fundamentos de Systems Engineering (el marco donde vive Requirements Engineering)
-
-Antes de entrar a Requirements Engineering en sí, vale la pena anclarlo dentro de la disciplina más amplia de la que forma parte, porque muchas entrevistas de nivel Test Function Lead/Manager empiezan preguntando por este contexto general antes de bajar al detalle de requisitos.
-
-### 0.1 Qué es un Sistema y qué es Systems Engineering
-- **Sistema**: un conjunto de elementos en interacción — no son las partes individuales lo que define un sistema, sino cómo interactúan entre sí para producir un comportamiento que ninguna parte podría lograr sola.
-- **Systems Engineering (Ingeniería de Sistemas)**: la disciplina enfocada en asegurar que esas piezas **encajen y funcionen juntas** para cumplir los objetivos del sistema completo, a lo largo de todo su ciclo de vida — no solo durante el desarrollo, sino desde el concepto hasta el retiro del sistema.
-
-*Conexión directa con tu experiencia*: cuando pruebas una ECU dentro de un banco HIL que simula el resto del vehículo, estás literalmente validando si esa pieza "encaja y funciona" dentro del sistema completo — Systems Engineering es el marco conceptual que explica por qué ese tipo de prueba (integración de sistema) es necesaria y no basta con probar la ECU de forma aislada (prueba de componente).
-
-### 0.2 Etapas del Ciclo de Vida de Systems Engineering
-Para gestionar el progreso de un sistema, su vida completa se divide en etapas:
-1. **Concepto (Concept Stage)**: se identifica el problema, se exploran necesidades y posibles soluciones a alto nivel.
-2. **Desarrollo (Development Stage)**: se diseña, construye y verifica el sistema — aquí vive la mayor parte de tu trabajo como probador.
-3. **Producción (Production Stage)**: se fabrica el sistema a escala.
-4. **Utilización/Soporte (Utilization/Support Stage)**: el sistema opera en campo y se mantiene — esto conecta directamente con la **Prueba de Mantenimiento** que ya estudiaste en Fundamentos de Testing.
-5. **Retiro (Retirement Stage)**: el sistema se da de baja — conecta con el desencadenante de mantenimiento de "retirada" que también ya viste.
-
-### 0.3 Dominio del Problema vs Dominio de la Solución
-Un principio central de Systems Engineering, y posiblemente el error más común que cometen equipos técnicos (incluidos equipos de prueba): **saltar directamente a diseñar una solución antes de entender completamente el problema**.
-- **Dominio del problema (Problem Domain)**: entender qué necesidad real existe, sin todavía comprometerse a una solución técnica específica.
-- **Dominio de la solución (Solution Domain)**: una vez entendido el problema, se exploran y seleccionan soluciones técnicas concretas.
-
-Establecer y entender bien el problema es **el primer paso** antes de hacer cualquier ingeniería de sistemas seria — un requisito mal concebido porque el equipo saltó directo a "la solución" sin entender el problema real es una causa raíz de proyectos completos que terminan resolviendo el problema equivocado (aunque lo resuelvan "bien" técnicamente).
-
-### 0.4 Proyectos Greenfield vs Brownfield
-- **Greenfield ("campo verde")**: un proyecto que inicia desde cero, sin sistema previo que condicione el diseño.
-- **Brownfield ("campo marrón")**: un proyecto que se construye sobre un sistema ya existente — debe considerar restricciones, compatibilidad e integración con lo que ya está en producción.
-
-*Conexión directa con tu experiencia*: la mayoría de tu trabajo en automotriz (evolucionar una plataforma de infotainment/ADAS ya existente, agregar soporte para un nuevo protocolo sobre una arquitectura ya establecida) es típicamente **Brownfield** — esto tiene implicaciones reales en cómo se escriben los requisitos: deben ser explícitos sobre qué debe **mantenerse compatible** con el sistema existente, no solo qué debe hacer la nueva función.
-
----
+> Los fundamentos de Systems Engineering (qué es un sistema, etapas del ciclo de vida, dominio del problema vs solución, Greenfield/Brownfield) se cubrieron en el capítulo anterior, *Ingeniería de Sistemas* — Requirements Engineering es, de hecho, uno de sus procesos técnicos (ver esa sección 2). Si llegaste directo a este capítulo, vale la pena revisar esa base primero.
 
 ## 1. Qué es Requirements Engineering y por qué importa
 
@@ -257,21 +226,18 @@ Los requisitos cambian — es inevitable. Un buen proceso de gestión de cambios
 - La elección del **método de verificación** (sección 7.2) determina directamente qué tipo de "caso de prueba" se diseña — no todos los requisitos requieren un caso de prueba ejecutado en HIL; algunos se cierran con una inspección o un análisis.
 
 ## Preguntas de teoría
-1. ¿Por qué entender el "dominio del problema" antes del "dominio de la solución" es tan importante, y qué puede salir mal si un equipo se salta este paso?
-2. Da un ejemplo propio de la diferencia entre un proyecto Greenfield y uno Brownfield en tu experiencia automotriz.
-3. Explica la diferencia entre una "necesidad" y un "requisito" con un ejemplo propio, distinto al de frenos usado en este capítulo.
-4. Describe el flujo de 5 pasos para transformar requisitos de cliente en requisitos de stakeholder.
-5. Usando el Modelo de Kano, clasifica 3 características de un sistema de infotainment en must-have, should-have y might-have.
-6. ¿Cuál es la diferencia entre un Caso de Uso, un Escenario Operacional y un ConOps?
-7. Explica las 9 características de un buen requisito (INCOSE) y da un ejemplo propio de violación para 3 de ellas distintas a las usadas en este capítulo.
-8. Toma un requisito ambiguo real de tu experiencia e identifica qué característica(s) de las 9 viola.
-9. ¿Cuáles son los 4 métodos de verificación (IADT), y da un ejemplo automotriz de cuándo usarías cada uno?
-10. ¿Por qué puedes verificar exitosamente un requisito y aun así fallar en validarlo? Da un ejemplo.
-11. ¿Qué es un "enabling system" (sistema habilitante) y por qué se identifica desde la fase de elicitación de stakeholder?
-12. Describe los estados típicos por los que pasa un requisito desde que se propone hasta que se valida.
+1. Explica la diferencia entre una "necesidad" y un "requisito" con un ejemplo propio, distinto al de frenos usado en este capítulo.
+2. Describe el flujo de 5 pasos para transformar requisitos de cliente en requisitos de stakeholder.
+3. Usando el Modelo de Kano, clasifica 3 características de un sistema de infotainment en must-have, should-have y might-have.
+4. ¿Cuál es la diferencia entre un Caso de Uso, un Escenario Operacional y un ConOps?
+5. Explica las 9 características de un buen requisito (INCOSE) y da un ejemplo propio de violación para 3 de ellas distintas a las usadas en este capítulo.
+6. Toma un requisito ambiguo real de tu experiencia e identifica qué característica(s) de las 9 viola.
+7. ¿Cuáles son los 4 métodos de verificación (IADT), y da un ejemplo automotriz de cuándo usarías cada uno?
+8. ¿Por qué puedes verificar exitosamente un requisito y aun así fallar en validarlo? Da un ejemplo.
+9. ¿Qué es un "enabling system" (sistema habilitante) y por qué se identifica desde la fase de elicitación de stakeholder?
+10. Describe los estados típicos por los que pasa un requisito desde que se propone hasta que se valida.
 
 ## Errores comunes
-- Saltar directamente al "dominio de la solución" sin haber entendido completamente el "dominio del problema" — un error de Systems Engineering, no solo de Requirements Engineering.
 - Confundir necesidad con requisito — una necesidad es la expresión informal del stakeholder; el requisito es su transformación estructurada y verificable.
 - Memorizar "4 actividades" o "5 actividades" de RE como si fuera un número mágico absoluto — lo importante es entender qué ocurre en cada paso (elicitar, analizar, comunicar/especificar/validar, gestionar).
 - Aplicar el Modelo de Kano solo a producto/marketing, sin conectar que también informa priorización de riesgo y esfuerzo de prueba.
@@ -279,3 +245,47 @@ Los requisitos cambian — es inevitable. Un buen proceso de gestión de cambios
 - Reducir las características de un buen requisito a solo "no ambiguo y verificable" — las 9 características completas (especialmente Apropiado, Singular, Correcto y Conforme) son las que distinguen un análisis superficial de uno riguroso en entrevista.
 - Pensar que todo requisito se verifica necesariamente con una "prueba" ejecutada en HIL — Inspección, Análisis y Demostración son métodos de verificación igualmente válidos y, a veces, más eficientes.
 - Confundir verificación de un requisito (¿se cumple lo que está escrito?) con validación del requisito (¿lo que está escrito realmente resuelve el problema del stakeholder?).
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar.
+
+### 1. Qué es RE y por qué importa
+- Los requisitos son la "to-do list" formal del proyecto: lo que no está en ellos (o no se deriva trazablemente) no es parte del alcance.
+- 4 actividades INCOSE: Elicitación → Análisis → Comunicación (especificación + validación) → Gestión — se repiten en cada nivel (stakeholder, sistema, subsistema, software), no ocurren una sola vez.
+
+### 2. Stakeholders, Necesidades y Requisitos
+- Necesidad (expresión informal del stakeholder) ≠ Requisito (transformación estructurada y verificable).
+- Flujo de 5 pasos: determinar stakeholders → elicitar necesidades → transformar en requisitos de stakeholder → identificar enabling systems → definir criterios de validación.
+- Modelo de Kano: must-have (ausencia = insatisfacción severa, presencia no suma), should-have (proporcional), might-have (deleite inesperado) — también prioriza el esfuerzo de prueba, no solo producto.
+- Caso de Uso (actor + sistema, un objetivo) vs Escenario Operacional (más amplio, narra varios casos de uso en secuencia) vs ConOps (documento de alto nivel, puente entre necesidad y requisitos).
+
+### 3. De Stakeholder a Sistema/Subsistema/Software
+- Jerarquía stakeholder → sistema → subsistema → software, auditada en ASPICE como SYS.2 → SYS.3 → SWE.1 → SWE.2.
+- 9 características INCOSE: Necesario, Apropiado, No Ambiguo, Completo, Singular, Factible, Verificable, Correcto, Conforme.
+- Requirement smells: adverbios/adjetivos vagos, pronombres ambiguos, voz pasiva sin sujeto, universales sin excepción, comparaciones sin referencia, requisitos compuestos.
+- EARS: Ubicuo / Basado en evento ("Cuando...") / Basado en estado ("Mientras...") / Opcional ("Donde...") / No deseado ("Si... entonces...").
+
+### 4. Trazabilidad
+- Backward = ¿por qué existe esto? (base de "Necesario"); Forward = ¿qué depende de esto?
+- En ASPICE/ISO 26262 la trazabilidad no es opcional — su ausencia es, por sí misma, un hallazgo de no conformidad en un assessment.
+
+### 5. Herramientas
+- DOORS: módulos con objetos y atributos, enlaces para trazabilidad, baselines (fotografía congelada para análisis de impacto); DNG = versión web.
+- RQM se enlaza a DOORS para cerrar el ciclo requisito → prueba; Jira/Confluence manejan la gestión ágil del día a día — en proyectos reales conviven ambos mundos.
+
+### 6. RE en el contexto automotriz (ASPICE)
+- SYS.2 (requisitos de sistema) → SYS.3 (arquitectura de sistema) → SWE.1 (requisitos de software) → SWE.2 (arquitectura de software).
+- ISO 26262: nivel ASIL (A–D) heredado de HARA; alto ASIL puede requerir descomposición en sub-requisitos, cada uno con su propia evidencia de verificación.
+
+### 7. Verificación y Validación de Requisitos
+- 4 métodos (IADT): **I**nspección (examen visual/manual), **A**nálisis (cálculo/simulación sin ejecutar el sistema real), **D**emostración (operar sin instrumentación de precisión), **T**est/Prueba (ejecutar con instrumentación para medir objetivamente) — no todo se verifica con Prueba en HIL.
+- Verificar (¿se cumple lo escrito?) ≠ Validar (¿lo escrito resuelve la necesidad real?) — puedes verificar con éxito un requisito mal concebido.
+
+### 8. Gestión de Cambios
+- Change Request → Análisis de impacto (vía trazabilidad) → Aprobación (Change Control Board) → Implementación + nueva baseline.
+- Estados típicos: Propuesto → Analizado → Aprobado → Implementado → Verificado → Validado.
+
+### 9. Requirements-Based Testing
+- Todo requisito verificable necesita al menos un caso de prueba; las técnicas de caja negra (PE, AVF, tabla de decisión, transición de estados) sirven para derivarlos sistemáticamente.
+- El método de verificación elegido (IADT) determina qué tipo de "caso de prueba" se diseña — no todo termina ejecutándose en HIL.

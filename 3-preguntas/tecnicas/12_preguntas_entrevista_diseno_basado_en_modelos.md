@@ -1,6 +1,6 @@
 # Tema: Diseño Basado en Modelos (Simulink / Stateflow)
 
-> Material de estudio base: capítulo `13_diseno_basado_en_modelos.md`. Mismo formato que los bancos anteriores. Tu conexión natural: los modelos de planta usados en HIL y las pruebas back-to-back MIL/SIL.
+> Material de estudio base: capítulo `12_diseno_basado_en_modelos.md`. Mismo formato que los bancos anteriores. Tu conexión natural: los modelos de planta usados en HIL y las pruebas back-to-back MIL/SIL.
 
 > Estructura recomendada para responder:
 > - *Concepto:* definición breve → por qué importa → ejemplo propio → limitación.

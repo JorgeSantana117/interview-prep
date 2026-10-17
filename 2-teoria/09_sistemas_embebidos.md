@@ -1,6 +1,6 @@
 # Capítulo: Sistemas Embebidos
 
-> Objetivo del capítulo: entender **el hardware sobre el que corre el software que pruebas**: qué hay dentro de una ECU, cómo se organizan la memoria, las interrupciones y los periféricos, y cómo se conectan sensores y actuadores. En una entrevista de Embedded SW Engineer te pedirán razonar con cierto detalle de hardware; en una de Test Engineer o Function Lead, lo que se valora es que puedas **conectar un síntoma observado en HIL con su causa probable en el hardware** (un timeout, un reset inesperado, una lectura analógica fuera de rango).
+> Objetivo del capítulo: al terminar podrás (1) describir los bloques de una ECU y conectar cada uno con un punto de estimulación o fault injection en HIL; (2) explicar endianness y su relación con los formatos Intel/Motorola de un DBC; (3) calcular sin dudar el LSB de un ADC, el ciclo de trabajo de un PWM y el bit timing de CAN; (4) diagnosticar un síntoma observado en HIL (reset inesperado, lectura ruidosa, mensajes perdidos) hasta una causa de hardware probable; y (5) explicar qué hace `volatile` y qué no, y por qué la caché/pipeline complican el determinismo. Entiende **el hardware sobre el que corre el software que pruebas**. Pesa más para **ESE** (detalle de hardware); para **TE/TFL** lo clave es la sección 12: conectar un síntoma de HIL con su causa probable.
 >
 > **Límites con otros capítulos (para no repetir):**
 > - Hardware, memoria, interrupciones, periféricos, sensores/actuadores, energía y reloj → **este capítulo**.
@@ -299,3 +299,64 @@ Una tabla práctica para razonar en entrevista (hipótesis típicas, no reglas a
 - Tratar el ADC como si midiera valores exactos: tiene resolución finita, ruido, error de cuantización y dependencia de Vref.
 - Olvidar que una causa de fallo puede ser **ambiental** (EMI, temperatura, tensión) y no un defecto en código.
 - No distinguir entre el periférico (hardware que implementa CAN) y el protocolo (reglas del bus) al explicar una falla.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar. (Para cálculos y mapeo síntoma→causa, usa también los bloques "Ejercicios numéricos" y "Cómo conectar un síntoma de HIL con una causa de hardware" de arriba — no se repiten aquí.)
+
+### 1. Qué es un sistema embebido
+- Función dedicada + recursos limitados + tiempo real + confiabilidad + entorno exigente + actualización costosa — vs. PC/servidor: propósito general, recursos abundantes, sin tiempo real.
+
+### 2. Anatomía de una ECU
+- Alimentación (protección + reguladores + supervisores) → MCU/SoC ← acondicionamiento de señal (sensores) / drivers de potencia (actuadores) ← transceptores de bus.
+- Cada bloque es un punto de estimulación o fault injection en HIL — los módulos del VT System corresponden a estos bloques.
+
+### 3. MCU, microprocesador, SoC, FPGA, ASIC
+- MCU = CPU+memoria+periféricos en un chip (control, tiempo real); microprocesador/SoC = mayor desempeño, corre SO (infotainment/ADAS); FPGA = lógica reconfigurable; ASIC = diseño a medida.
+- Tu experiencia: infotainment/QNX = mundo SoC + SO; ECUs de control AUTOSAR Classic = mundo MCU + RTOS.
+
+### 4. Arquitectura del procesador
+- Cortex-M (MCU, bajo consumo) / Cortex-R (tiempo real, seguridad) / Cortex-A (aplicaciones, Linux/QNX).
+- Caché y pipeline mejoran el promedio pero complican el **peor caso determinista** — por eso la TCM en sistemas críticos.
+- Lockstep: dos núcleos en paso sincronizado + comparador — mecanismo de seguridad de hardware para ASIL alto.
+- Endianness: little-endian (Intel, común en ARM/x86) vs big-endian (Motorola) — un desajuste produce valores "aleatorios" con el bus funcionando perfectamente bien.
+
+### 5. Memoria
+- Flash (código, se borra por sectores, ciclos limitados) / SRAM (variables, volátil) / EEPROM-Data Flash (persistente, vía NVRAM Manager) / ROM (bootloader) / Caché-TCM / DRAM externa.
+- Secciones del linker: `.text`/`.rodata` (Flash), `.data`/`.bss` (RAM), stack (overflow = corrupción difícil de reproducir), heap (evitado en sistemas críticos).
+- El archivo `.map` del linker es la fuente de las direcciones del A2L — debe corresponder al build exacto que corre en la ECU.
+- ECC corrige errores de 1 bit y detecta de 2; dual-bank Flash permite programar un banco mientras se ejecuta desde el otro (base de OTA segura).
+
+### 6. Interrupciones y excepciones
+- ISR: tabla de vectores → controlador de interrupciones (NVIC) → prioridades/anidamiento; la latencia depende de prioridad, enmascaramiento y guardado de contexto.
+- Polling (simple, consume CPU) vs interrupción (rápida, añade complejidad de concurrencia) vs DMA (libera CPU, configuración más compleja).
+- ISR corta, diferir el procesamiento a una tarea — una ISR larga pierde tramas CAN o incumple plazos.
+- Hard fault → reset o estado seguro; se diagnostica con la dirección que falló y el contenido de la pila.
+
+### 7. Periféricos
+- ADC: LSB = Vref/2ⁿ; afectado por frecuencia de muestreo (Nyquist), ruido, impedancia, precisión de Vref y cuantización.
+- UART (2 hilos, asíncrona) / SPI (4 hilos, síncrona, rápida) / I²C (2 hilos, síncrona, multi-dispositivo por dirección).
+- El controlador CAN implementa el protocolo en hardware (arbitraje/CRC/ACK/stuffing); el software usa mailboxes y filtros de aceptación — un bit timing mal configurado o un reloj impreciso genera errores de bit/CRC aunque el cableado esté sano.
+
+### 8. Sensores y actuadores
+- Salida analógica (ADC) / digital-frecuencia-PWM (GPIO, captura) / bus digital (SPI/I²C/CAN/Ethernet) / imagen-nube de puntos (interfaz de alta velocidad).
+- Sensores críticos con 2 canales — una discrepancia entre ambos genera DTC y modo degradado.
+- Fallas eléctricas típicas (circuito abierto, corto a tierra/batería, corto entre pines) son justo lo que inyectas con el VT System.
+
+### 9. Reloj y alimentación
+- Oscilador de cristal + PLL generan el árbol de reloj; su precisión afecta directamente el bit timing de los buses.
+- Cold crank (caída de tensión al arranque), load dump (sobretensión), polaridad inversa, transitorios — normados en ISO 16750/ISO 7637.
+- Reset por baja tensión (brown-out) cuando la alimentación cae bajo el umbral; conocer la causa del último reset es clave al depurar reinicios.
+
+### 10. Confiabilidad y seguridad de hardware
+- Watchdog de ventana (exige alimentarlo ni muy pronto ni muy tarde) detecta también bucles anómalos; un watchdog externo es independiente de la MCU.
+- Lockstep + ECC + BIST = detección de errores de cómputo, memoria y lógica.
+- AEC-Q100: Grado 0 (−40 a 150 °C) a Grado 3 (−40 a 85 °C) según temperatura de operación.
+- Una causa de fallo puede ser **ambiental** (EMI, temperatura, tensión), no un defecto de software.
+
+### 11. Herramientas de depuración de hardware
+- JTAG/SWD es la base de la debug board del banco HIL; ETM/trace registra la ejecución sin detenerla — clave para problemas de timing que un breakpoint alteraría.
+- Osciloscopio (formas de onda reales) vs analizador lógico (señales digitales, decodifica SPI/I²C/UART).
+
+### 12. Síntoma HIL → causa de hardware
+- Este capítulo cierra con una tabla práctica síntoma → hipótesis de causa (reinicios, lecturas ruidosas, mensajes perdidos, valores "raros" multibyte, fallas de flasheo) — es el puente directo entre lo que observas en HIL y el hardware que lo explica.

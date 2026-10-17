@@ -1,6 +1,6 @@
 # Capítulo: Diseño Basado en Modelos (Model-Based Design, MBD)
 
-> Objetivo del capítulo: entender cómo se **diseña, simula, verifica y convierte en código** la lógica de una ECU a partir de modelos en **Simulink y Stateflow**, y cómo esos mismos modelos se usan para construir **modelos de ECU y de planta para HIL**. Es el capítulo donde se conectan tu experiencia en Ford (desarrollo de modelos Simulink/Stateflow a partir de especificaciones y datos de CAN) con lo que ya viste de MIL/SIL/HIL.
+> Objetivo del capítulo: al terminar podrás (1) calcular la resolución/rango de un tipo de punto fijo y relacionarlo con el factor/offset de una señal DBC; (2) explicar por qué HIL exige un solver de paso fijo y detectar cuándo un modelo va a producir un overrun; (3) aplicar los tres criterios de cobertura de transición de estado a un chart de Stateflow real (como el de sesiones UDS); (4) explicar qué causa una discrepancia *back-to-back* entre MIL y SIL, y cuándo es aceptable; y (5) construir un modelo de ECU/planta para HIL a partir de una especificación y una matriz de comunicación. Conecta tu experiencia en Ford (modelos Simulink/Stateflow desde especificaciones y datos de CAN) con lo que ya viste de MIL/SIL/HIL.
 >
 > **Límites con otros capítulos (para no repetir):**
 > - Definiciones de MIL, SIL, PIL, HIL y el concepto de "planta" → ya en *HIL Testing*. Aquí: cómo se construyen y verifican esos modelos.
@@ -272,3 +272,48 @@ Se compara la salida del **modelo (MIL)** con la del **código (SIL, luego PIL)*
 - Dar por hecho que el modelo de planta es perfecto: tiene un rango de validez que debe documentarse.
 - Tratar los modelos como archivos sin control: no versionarlos, no revisarlos y no comparar cambios.
 - Ignorar la calificación de herramientas y las restricciones de modelado en proyectos de seguridad funcional.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar. (Para cálculos y mapeo síntoma→causa, usa también los bloques "Ejercicios de práctica" y "Del síntoma a la causa probable" de arriba — no se repiten aquí.)
+
+### 1. Qué es el Diseño Basado en Modelos
+- Flujo: Requisitos → Modelo (Simulink/Stateflow) → MIL → generación de código → SIL → PIL → ECU → HIL → Vehículo.
+- Ventajas: validar lógica sin hardware, modelo como especificación ejecutable, trazabilidad requisito↔bloque, pruebas back-to-back entre niveles.
+- Riesgos: curva de aprendizaje del modelado, código generado menos legible, calificación de herramientas en seguridad, "validar el modelo y olvidar el software real".
+
+### 2. Simulink: fundamentos
+- Subsistemas virtuales (solo organización visual) vs atómicos (se ejecutan como unidad, se reflejan como función en el código generado).
+- Paso fijo = generación de código y HIL (ritmo constante); paso variable = simulación offline.
+- Punto fijo = entero × escala + offset — el mismo concepto que factor/offset de una señal en un DBC.
+- Saturación (se queda en el límite) vs *wrap-around* (se desborda) — en software de seguridad se prefiere la saturación explícita.
+- Los *bus objects* agrupan señales con nombre (como un `struct`) — preferibles a `Mux`/`Demux`.
+
+### 3. Stateflow
+- Acciones de un estado: `entry`/`during`/`exit`; una transición se etiqueta `evento [condición] {acción} / acción`.
+- Descomposición exclusiva (OR, un solo subestado activo) vs paralela (AND, varios activos a la vez).
+- El orden de evaluación de transiciones debe fijarse **explícitamente**, no depender de la geometría del dibujo — fuente de nondeterminismo accidental.
+- Ejemplo de sesiones UDS: 3 estados × 4 eventos = 12 celdas → 6 transiciones válidas, 6 inválidas.
+
+### 4. Modelado de ECUs y plantas para HIL
+- Se modela: planta (dinámica física), ECU virtual (completa la red si falta hardware real), rest-bus simulation (desde DBC/ARXML), modelo de falla.
+- La fidelidad debe ser "suficiente para el objetivo de prueba", no perfecta — se valida contra mediciones reales y se documenta el rango de validez.
+- Se ejecuta en un objetivo de tiempo real (dSPACE/Speedgoat/ETAS) vigilando el tiempo de ejecución por paso para evitar overruns.
+
+### 5. Generación de código
+- Embedded Coder/TargetLink generan C/C++ desde el modelo, con soporte para código compatible con AUTOSAR (SWCs/ARXML).
+- MISRA C aplica también al código generado; la versión de herramienta, generador y compilador forma parte de la línea base.
+- Back-to-back: comparar MIL vs SIL/PIL con tolerancias definidas — causas típicas de discrepancia: precisión numérica, orden de evaluación, conversiones de tipo, desbordamiento.
+
+### 6. Verificación y validación a nivel de modelo
+- Model Advisor detecta lazos algebraicos, conversiones inseguras y bloques no recomendados — es el equivalente del análisis estático de código.
+- La cobertura de modelo (decisión, condición, MC/DC) es análoga a la cobertura de código; Simulink Design Verifier hace verificación formal.
+- El modelo es un producto de trabajo de SWE.2/SWE.3 (y evidencia para SWE.4 si se verifica a nivel de modelo); las herramientas de modelado/generación requieren calificación según el ASIL.
+
+### 7. Buenas prácticas de modelado
+- Arquitectura modular, parámetros fuera de los bloques (diccionario de datos, no números mágicos), tipos de datos explícitos, inicialización definida de estados/salidas.
+- Evitar lazos algebraicos, `Goto`/`From` excesivos y jerarquías profundas; controlar explícitamente el orden de ejecución y las tasas de muestreo.
+- Los archivos de modelo requieren control de versiones y herramientas de comparación/*merge* específicas.
+
+### 8. Síntoma → causa (nivel modelo/HIL)
+- La tabla de este capítulo (discrepancia MIL/SIL, overrun, comportamiento no determinista, chart atascado, cobertura incompleta) es el puente entre un síntoma de simulación y su causa en el modelo.

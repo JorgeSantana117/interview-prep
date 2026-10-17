@@ -1,6 +1,6 @@
 # Capítulo: Herramientas de Testing y Automatización (CANoe, vTESTstudio, Robot Framework)
 
-> Objetivo del capítulo: al igual que HIL, este es un tema de experiencia directa y diaria para ti — las tres herramientas de tu CV. El objetivo no es aprender a usarlas desde cero, sino poder **explicar su arquitectura, propósito y diferencias** con precisión técnica, porque en entrevista es común que te pidan justificar *por qué* usarías una herramienta sobre otra en un escenario dado, no solo que confirmes que sabes usarlas.
+> Objetivo del capítulo: al terminar podrás (1) explicar la arquitectura de CANoe (CAPL orientado a eventos, Trace, Diagnostic Console, VT System) y justificar qué tipo de interfaz usarías según el escenario; (2) defender por qué CANoe y vTESTstudio no compiten sino que son capas de ejecución vs diseño; (3) explicar por qué Robot Framework orquesta en vez de reemplazar a CANoe, y cómo se conectan técnicamente (librería Python vía COM); y (4) describir tu stack de automatización completo de punta a punta (vTESTstudio → CANoe → Robot Framework → Jenkins/Docker → Jira/RQM). Al igual que HIL, es un tema de experiencia directa y diaria para ti — el reto no es aprenderlas desde cero, sino **justificar con precisión arquitectónica** por qué usarías una sobre otra en un escenario dado. Pesa más para **TE** (uso directo) y **TFL** (justificar la arquitectura completa del stack es pregunta de nivel lead).
 
 ---
 
@@ -34,12 +34,14 @@ CANoe por sí mismo es software — necesita **interfaces de hardware Vector (fa
 
 **Nota práctica para entrevista**: la elección del hardware específico depende del **número de canales simultáneos** que necesitas, si requieres **sincronización temporal precisa** entre buses (relevante si recuerdas TSN del capítulo de Ethernet), y si el escenario es de banco de escritorio (interfaces USB simples) o un banco HIL de producción (dispositivos standalone con más robustez y canales).
 
+> ⚠️ **Verificar antes de usar en entrevista**: los números de modelo exactos (VN1610, VN8912, VN5610, VN7570, etc.) no están confirmados contra el catálogo vigente de Vector — úsalos para explicar las **categorías** (USB compacta / gama media / standalone multicanal / Ethernet), no como SKU garantizado. Si en la entrevista te preguntan por un modelo específico, confía en el que realmente usaste en campo, no en este listado.
+
 ### 1.4 VT System — simulación de señales eléctricas reales
 
 El **VT System** de Vector es un sistema de hardware **modular** diseñado específicamente para la estimulación y medición de señales eléctricas en bancos HIL — es la pieza de hardware que conecta directamente con lo que estudiaste en el capítulo de HIL Testing sobre **Signal-level HIL** e **interfaces de I/O**.
 
 - **Arquitectura modular en chasis**: el VT System se compone de un chasis (rack) donde se insertan distintos **módulos VT** intercambiables, según qué tipo de señal necesites simular o medir. Esto permite configurar un banco HIL a la medida exacta de los pines/señales de la ECU bajo prueba, y escalarlo simplemente agregando o quitando módulos.
-- **Módulos comunes** (ejemplos representativos, no una lista exhaustiva):
+- **Módulos comunes** (ejemplos representativos, no una lista exhaustiva — mismo aviso de verificación de la sección 1.3 aplica a estos números):
   - **VT2004 / VT2816**: módulos de I/O analógico/digital — generan voltajes analógicos (simulando, por ejemplo, la señal de un sensor de temperatura tipo NTC) y leen/generan señales digitales.
   - **VT6104 / VT6204**: módulos de carga electrónica (electronic load) — simulan cargas reales (ej. un motor o un actuador) para pruebas donde el comportamiento eléctrico de la carga importa, conectando con el concepto de **Mechatronic/Power HIL** del capítulo de HIL.
   - **VT7001 / VT7900**: módulos de fuente de alimentación programable — permiten simular condiciones de batería del vehículo (ej. bajo voltaje, sobrevoltaje, rizado) para pruebas de robustez eléctrica.
@@ -317,3 +319,30 @@ Un entrevistador de nivel Test Function Lead puede pedirte explícitamente: *"De
 
 ## Errores comunes — Síntesis
 - Presentar las tres herramientas como opciones intercambiables entre sí, en vez de piezas complementarias de un mismo flujo — mostrar que entiendes la arquitectura completa (diseño → ejecución → orquestación → CI/CD) es lo que distingue una respuesta de nivel medio de una de Test Function Lead.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar.
+
+### 1. CANoe
+- Es la plataforma de **ejecución y simulación**: el motor que interactúa de verdad con el bus (real o simulado), corre CAPL y muestra el Trace en tiempo real.
+- CAPL es orientado a eventos (`on message`, `on timer`, `on key`, `on diagRequest`), sintaxis tipo C — no se ejecuta secuencialmente de arriba a abajo.
+- Diagnostic Console usa un archivo CDD/ODX para UDS — el mismo patrón de "diccionario" que el A2L para XCP.
+- Hardware Vector VN: USB compacta (pocos canales, escritorio) → gama media (varios canales) → standalone multicanal (bancos HIL grandes) → interfaces dedicadas para Automotive Ethernet. *(Verificar modelos exactos antes de citarlos — ver nota en 1.3.)*
+- VT System: chasis modular (no se controla aislado, se integra con CANoe) — módulos de I/O analógico/digital, carga electrónica (Power HIL), fuente programable, y relés para fault injection física.
+- Los Test Modules se escriben en CAPL o en .NET (C#) — mencionar ambos muestra conocimiento actualizado.
+
+### 2. vTESTstudio
+- Es capa de **diseño/especificación**, no de ejecución — siempre depende del motor de CANoe para correr.
+- Su valor central es la **reutilización** (Test Steps/Building Blocks) y la trazabilidad a requisitos — no es solo "una interfaz más amigable".
+- La parametrización de casos es la aplicación práctica de Partición de Equivalencia y AVF (capítulo de Fundamentos de Testing).
+
+### 3. Robot Framework
+- Framework genérico **keyword-driven**, no específico de automotriz — en tu stack es la capa de **orquestación** sobre CANoe, no un reemplazo.
+- No "habla CAN" nativamente: una librería Python (vía COM, ej. `win32com.client`) controla la API de CANoe; Robot Framework solo orquesta llamadas legibles.
+- Ventaja diferencial: legibilidad para no-programadores (whole-team approach/ATDD) + reportes HTML automáticos sin configuración extra.
+- Se integra en Jenkins para regresión automatizada en cada build; Docker empaqueta el entorno de ejecución de forma reproducible.
+
+### 4. Cómo encajan juntas
+- Flujo completo: diseño (**vTESTstudio**) → ejecución de bajo nivel (**CANoe** + banco HIL) → orquestación (**Robot Framework**) → CI/CD (**Jenkins/Docker**) → gestión de defectos (**Jira/RQM**).
+- No son intercambiables — operan en capas distintas (diseño / ejecución especializada / orquestación genérica); la pregunta trampa de entrevista asume que compiten entre sí.

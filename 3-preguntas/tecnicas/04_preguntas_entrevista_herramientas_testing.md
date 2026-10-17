@@ -1,6 +1,6 @@
 # Tema: Herramientas de Testing y Automatización (CANoe, VT System, CAPL, vTESTstudio, Robot Framework)
 
-> Material de estudio base: capítulo `05_herramientas_testing_automatizacion.md`. Mismo formato que los bancos anteriores. Este es el tema donde más te conviene hablar con ejemplos propios de Bosch, ALTEN, VW y Ford.
+> Material de estudio base: capítulo `04_herramientas_testing_automatizacion.md`. Mismo formato que los bancos anteriores. Este es el tema donde más te conviene hablar con ejemplos propios de Bosch, ALTEN, VW y Ford.
 
 > Estructura recomendada para responder:
 > - *Concepto:* qué es → para qué se usa → ejemplo propio → limitación.

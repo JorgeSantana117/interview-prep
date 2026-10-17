@@ -1,12 +1,45 @@
 # Capítulo: Ingeniería de Sistemas
 
-> Objetivo del capítulo: cubrir la ingeniería de sistemas **tal como se practica en un programa automotriz**, con foco en lo que un Test Function Lead o Test Manager necesita dominar: arquitectura, interfaces, decisiones de diseño, integración y verificación a nivel sistema, seguridad funcional y gestión de variantes.
+> Objetivo del capítulo: al terminar podrás (1) explicar qué es un sistema y por qué el dominio del problema precede al de la solución, con tu propio ejemplo Greenfield/Brownfield; (2) descomponer una arquitectura funcional en física, asignar requisitos y defender un presupuesto de diseño (latencia, carga de bus); (3) estructurar un trade study con análisis de sensibilidad y explicar qué aporta MBSE/SysML frente a documentos de texto dispersos; (4) caminar por el V/W-Model, las estrategias de integración y la matriz de verificación de un programa real; y (5) aplicar HARA/ASIL, FMEA/FTA y SOTIF a un escenario de seguridad funcional concreto. Cubre la ingeniería de sistemas **tal como se practica en un programa automotriz**. Pesa más para **TFL/TM** (arquitectura, integración, seguridad y variantes son su terreno natural); para **ESE/TE** es el marco que explica de dónde vienen los requisitos e interfaces que implementas o pruebas.
 >
 > **Límites con otros capítulos (para no repetir):**
-> - Sistema, ciclo de vida, dominio del problema vs solución, Greenfield/Brownfield → ya en *Requirements Engineering* (sección 0).
-> - Procesos SYS.1–SYS.5 y niveles de capacidad → ya en *ASPICE/AUTOSAR*.
+> - Necesidad vs requisito, elicitación, las 9 características INCOSE, verificación/validación de requisitos → irán en *Requirements Engineering* (siguiente capítulo; aquí solo el marco general de sistema/ciclo de vida del que ese capítulo parte).
+> - Procesos SYS.1–SYS.5 y niveles de capacidad, formalizados con código de proceso → irán en *ASPICE/AUTOSAR*.
 > - Principios de diseño de software, MISRA, code review, ágil, configuración de software → irán en *Ingeniería de Software*.
-> - Aquí: arquitectura de sistema, interfaces, trade studies, MBSE, V/W-Model, integración y verificación de sistema, hitos, análisis de seguridad y variantes.
+> - Aquí: fundamentos de Systems Engineering, arquitectura de sistema, interfaces, trade studies, MBSE, V/W-Model, integración y verificación de sistema, hitos, análisis de seguridad y variantes.
+
+---
+
+## 0. Fundamentos de Systems Engineering
+
+Antes de entrar en arquitectura, interfaces y V-Model, vale la pena anclar estos conceptos base, porque muchas entrevistas de nivel Test Function Lead/Manager empiezan preguntando por este contexto general antes de bajar al detalle técnico. Requirements Engineering (el capítulo siguiente) es, de hecho, uno de los procesos técnicos de esta misma disciplina (ver sección 2 de este capítulo).
+
+### 0.1 Qué es un Sistema y qué es Systems Engineering
+- **Sistema**: un conjunto de elementos en interacción — no son las partes individuales lo que define un sistema, sino cómo interactúan entre sí para producir un comportamiento que ninguna parte podría lograr sola.
+- **Systems Engineering (Ingeniería de Sistemas)**: la disciplina enfocada en asegurar que esas piezas **encajen y funcionen juntas** para cumplir los objetivos del sistema completo, a lo largo de todo su ciclo de vida — no solo durante el desarrollo, sino desde el concepto hasta el retiro del sistema.
+
+*Conexión directa con tu experiencia*: cuando pruebas una ECU dentro de un banco HIL que simula el resto del vehículo, estás literalmente validando si esa pieza "encaja y funciona" dentro del sistema completo — Systems Engineering es el marco conceptual que explica por qué ese tipo de prueba (integración de sistema) es necesaria y no basta con probar la ECU de forma aislada (prueba de componente).
+
+### 0.2 Etapas del Ciclo de Vida de Systems Engineering
+Para gestionar el progreso de un sistema, su vida completa se divide en etapas:
+1. **Concepto (Concept Stage)**: se identifica el problema, se exploran necesidades y posibles soluciones a alto nivel.
+2. **Desarrollo (Development Stage)**: se diseña, construye y verifica el sistema — aquí vive la mayor parte de tu trabajo como probador.
+3. **Producción (Production Stage)**: se fabrica el sistema a escala.
+4. **Utilización/Soporte (Utilization/Support Stage)**: el sistema opera en campo y se mantiene — esto conecta directamente con la **Prueba de Mantenimiento** que ya estudiaste en Fundamentos de Testing.
+5. **Retiro (Retirement Stage)**: el sistema se da de baja — conecta con el desencadenante de mantenimiento de "retirada" que también ya viste.
+
+### 0.3 Dominio del Problema vs Dominio de la Solución
+Un principio central de Systems Engineering, y posiblemente el error más común que cometen equipos técnicos (incluidos equipos de prueba): **saltar directamente a diseñar una solución antes de entender completamente el problema**.
+- **Dominio del problema (Problem Domain)**: entender qué necesidad real existe, sin todavía comprometerse a una solución técnica específica.
+- **Dominio de la solución (Solution Domain)**: una vez entendido el problema, se exploran y seleccionan soluciones técnicas concretas.
+
+Establecer y entender bien el problema es **el primer paso** antes de hacer cualquier ingeniería de sistemas seria — un requisito mal concebido porque el equipo saltó directo a "la solución" sin entender el problema real es una causa raíz de proyectos completos que terminan resolviendo el problema equivocado (aunque lo resuelvan "bien" técnicamente).
+
+### 0.4 Proyectos Greenfield vs Brownfield
+- **Greenfield ("campo verde")**: un proyecto que inicia desde cero, sin sistema previo que condicione el diseño.
+- **Brownfield ("campo marrón")**: un proyecto que se construye sobre un sistema ya existente — debe considerar restricciones, compatibilidad e integración con lo que ya está en producción.
+
+*Conexión directa con tu experiencia*: la mayoría de tu trabajo en automotriz (evolucionar una plataforma de infotainment/ADAS ya existente, agregar soporte para un nuevo protocolo sobre una arquitectura ya establecida) es típicamente **Brownfield** — esto tiene implicaciones reales en cómo se escriben los requisitos: deben ser explícitos sobre qué debe **mantenerse compatible** con el sistema existente, no solo qué debe hacer la nueva función (lo verás formalizado en *Requirements Engineering*).
 
 ---
 
@@ -18,13 +51,13 @@ El **Systems Engineer** es quien garantiza que el sistema completo (hardware, so
 
 ## 2. Procesos técnicos de la ingeniería de sistemas
 
-El estándar **ISO/IEC/IEEE 15288** (y la guía INCOSE, que ya viste como base del curso de requisitos) agrupa los procesos técnicos así:
+El estándar **ISO/IEC/IEEE 15288** (y la guía INCOSE, que es la base formal del capítulo de Requirements Engineering) agrupa los procesos técnicos así:
 
-| Proceso | Qué produce | Dónde lo has visto |
+| Proceso | Qué produce | Referencia |
 |---|---|---|
-| Análisis de misión/negocio | Definición del problema u oportunidad | RE, sección 0 |
-| Definición de necesidades y requisitos de stakeholder | Requisitos de stakeholder | RE, sección 2 |
-| Definición de requisitos de sistema | Requisitos de sistema | RE, sección 3 / ASPICE SYS.2 |
+| Análisis de misión/negocio | Definición del problema u oportunidad | Sección 0 de este capítulo |
+| Definición de necesidades y requisitos de stakeholder | Requisitos de stakeholder | Requirements Engineering, sección 2 |
+| Definición de requisitos de sistema | Requisitos de sistema | Requirements Engineering, sección 3 / ASPICE SYS.2 |
 | Definición de arquitectura | Arquitectura de sistema | Sección 3 de este capítulo / SYS.3 |
 | Definición de diseño | Diseño de elementos (HW, SW) | — |
 | Análisis de sistema | Trade studies, simulaciones, análisis de desempeño | Secciones 5 y 11 |
@@ -32,7 +65,7 @@ El estándar **ISO/IEC/IEEE 15288** (y la guía INCOSE, que ya viste como base d
 | Integración | Sistema ensamblado | Sección 7 / SYS.4 |
 | Verificación | Evidencia de que cumple los requisitos | Sección 7 / SYS.5 |
 | Transición | Entrega a producción/operación | Sección 8 |
-| Validación | Evidencia de que satisface las necesidades | RE, sección 7 |
+| Validación | Evidencia de que satisface las necesidades | Requirements Engineering, sección 7 |
 | Operación, mantenimiento, retiro | Soporte en campo | Fundamentos de Testing (prueba de mantenimiento) |
 
 Estos procesos no son una secuencia rígida. Se solapan e iteran, y se aplican recursivamente a cada nivel (sistema, subsistema, componente).
@@ -179,7 +212,7 @@ Identifica situaciones peligrosas de una función y clasifica cada riesgo con tr
 - **Exposición (E0–E4)**: probabilidad de encontrarse en la situación peligrosa.
 - **Controlabilidad (C0–C3)**: capacidad del conductor u otros de evitar el daño.
 
-La combinación determina el nivel **ASIL (A, B, C o D; D es el más exigente)** o **QM** (sin requisitos de seguridad especiales, solo gestión de calidad). De cada riesgo relevante se deriva un **objetivo de seguridad (safety goal)**, que se descompone en requisitos de seguridad (ya viste la descomposición ASIL en RE).
+La combinación determina el nivel **ASIL (A, B, C o D; D es el más exigente)** o **QM** (sin requisitos de seguridad especiales, solo gestión de calidad). De cada riesgo relevante se deriva un **objetivo de seguridad (safety goal)**, que se descompone en requisitos de seguridad (la descomposición ASIL se detalla en *Requirements Engineering*).
 
 ### 9.3 Conceptos clave de seguridad
 - **Estado seguro (safe state)**: condición del sistema en la que el riesgo es aceptable (por ejemplo, desactivar la función y avisar al conductor).
@@ -220,25 +253,28 @@ Debe definir: alcance y objetivos, requisitos a verificar y método para cada un
 Son parámetros críticos del sistema que se **siguen a lo largo del desarrollo** para anticipar si se cumplirá el requisito final: latencia extremo a extremo, consumo de energía, masa, uso de CPU o memoria, carga de bus, tasa de falsos positivos de una función. Se miden primero en modelos y simulaciones, luego en HIL y finalmente en vehículo, y se comparan contra el presupuesto asignado. Detectar una tendencia desfavorable temprano evita sorpresas en C-Sample.
 
 ## Preguntas de teoría
-1. ¿Qué es la asignación (allocation) de requisitos y por qué genera requisitos derivados? Da un ejemplo automotriz.
-2. Explica la diferencia entre arquitectura funcional y física, y por qué se definen en ese orden.
-3. ¿Qué es un presupuesto de latencia y cómo se relaciona con un requisito que verificas en HIL?
-4. Describe la evolución de arquitecturas E/E distribuida → dominios → zonal/cómputo central, y su impacto en el esfuerzo de prueba.
-5. ¿Qué debe definir una especificación de interfaz además de las señales que se intercambian?
-6. ¿Qué es un diagrama N² y para qué sirve?
-7. Explica por qué muchos defectos de integración de sistema son defectos de interfaz y no de código. Da tres ejemplos concretos.
-8. Describe los pasos de un trade study y qué aporta el análisis de sensibilidad.
-9. ¿Qué diferencia hay entre MBSE/SysML y el modelado en Simulink/Stateflow?
-10. Compara las estrategias de integración bottom-up, top-down, big-bang y sandwich. ¿Cómo encaja HIL en esa estrategia?
-11. ¿Qué es una matriz de verificación y qué evidencia aporta en un assessment ASPICE?
-12. Explica el HARA: parámetros S/E/C y cómo se llega a un ASIL.
-13. ¿Qué es el FTTI y cómo lo verificarías en un banco HIL?
-14. ¿Cuál es la diferencia entre FMEA y FTA (inductivo vs deductivo)? ¿Qué reemplazó al RPN en el método AIAG-VDA?
-15. ¿Qué cubre SOTIF que ISO 26262 no cubre?
-16. ¿Cómo abordarías la estrategia de pruebas de un producto con 40 variantes?
-17. ¿Qué son las TPMs y por qué conviene seguirlas desde etapas tempranas?
+1. ¿Por qué entender el "dominio del problema" antes del "dominio de la solución" es tan importante, y qué puede salir mal si un equipo se salta este paso?
+2. Da un ejemplo propio de la diferencia entre un proyecto Greenfield y uno Brownfield en tu experiencia automotriz.
+3. ¿Qué es la asignación (allocation) de requisitos y por qué genera requisitos derivados? Da un ejemplo automotriz.
+4. Explica la diferencia entre arquitectura funcional y física, y por qué se definen en ese orden.
+5. ¿Qué es un presupuesto de latencia y cómo se relaciona con un requisito que verificas en HIL?
+6. Describe la evolución de arquitecturas E/E distribuida → dominios → zonal/cómputo central, y su impacto en el esfuerzo de prueba.
+7. ¿Qué debe definir una especificación de interfaz además de las señales que se intercambian?
+8. ¿Qué es un diagrama N² y para qué sirve?
+9. Explica por qué muchos defectos de integración de sistema son defectos de interfaz y no de código. Da tres ejemplos concretos.
+10. Describe los pasos de un trade study y qué aporta el análisis de sensibilidad.
+11. ¿Qué diferencia hay entre MBSE/SysML y el modelado en Simulink/Stateflow?
+12. Compara las estrategias de integración bottom-up, top-down, big-bang y sandwich. ¿Cómo encaja HIL en esa estrategia?
+13. ¿Qué es una matriz de verificación y qué evidencia aporta en un assessment ASPICE?
+14. Explica el HARA: parámetros S/E/C y cómo se llega a un ASIL.
+15. ¿Qué es el FTTI y cómo lo verificarías en un banco HIL?
+16. ¿Cuál es la diferencia entre FMEA y FTA (inductivo vs deductivo)? ¿Qué reemplazó al RPN en el método AIAG-VDA?
+17. ¿Qué cubre SOTIF que ISO 26262 no cubre?
+18. ¿Cómo abordarías la estrategia de pruebas de un producto con 40 variantes?
+19. ¿Qué son las TPMs y por qué conviene seguirlas desde etapas tempranas?
 
 ## Errores comunes
+- Saltar directamente al "dominio de la solución" sin haber entendido completamente el "dominio del problema".
 - Pensar que ingeniería de sistemas es "documentación de arquitectura" y no un proceso de decisiones, compromisos y control de interfaces.
 - Verificar cada componente por separado y asumir que el sistema cumplirá un presupuesto compartido (latencia, carga de bus) sin medir el total.
 - Tratar las interfaces como un detalle de implementación en vez de como artefactos bajo control de cambios con dueño definido.
@@ -249,3 +285,58 @@ Son parámetros críticos del sistema que se **siguen a lo largo del desarrollo*
 - Ignorar SOTIF en funciones ADAS: un sistema sin fallas puede aun así ser inseguro por limitaciones de desempeño.
 - Subestimar la gestión de variantes: probar solo una configuración y asumir que las demás se comportan igual.
 - Presentar los hitos A/B/C/D como universales: son una convención común, pero los nombres y criterios los define cada OEM.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar.
+
+### 0. Fundamentos de Systems Engineering
+- Sistema = interacción entre elementos; Systems Engineering asegura que encajen durante todo el ciclo de vida, no solo en desarrollo.
+- 5 etapas: Concepto → Desarrollo → Producción → Utilización/Soporte → Retiro.
+- **Dominio del problema** (entender la necesidad) siempre antes que **dominio de la solución** (elegir la solución técnica).
+- Greenfield (desde cero) vs Brownfield (sobre sistema existente) — tu trabajo automotriz es típicamente Brownfield.
+
+### 1. La ingeniería de sistemas en la práctica
+- El Systems Engineer deriva requisitos, define arquitectura, controla interfaces, planea integración/verificación y gestiona trade-offs de costo/tiempo/riesgo/calidad.
+
+### 2. Procesos técnicos (ISO/IEC/IEEE 15288)
+- Los procesos se solapan e iteran, y se aplican recursivamente en cada nivel (sistema, subsistema, componente) — no es una secuencia rígida de una sola pasada.
+
+### 3. Arquitectura de sistema
+- Funcional (qué hace, flujo de datos) se define antes que física (a qué elemento concreto se asigna); la asignación genera **requisitos derivados**.
+- Buena arquitectura = alta cohesión + bajo acoplamiento + interfaces simples.
+- Presupuestos de diseño (latencia, carga de bus, memoria/CPU, energía/masa) se reparten entre elementos — si uno se excede, el sistema incumple aunque cada parte "funcione".
+- Evolución E/E: distribuida (clásica) → por dominios → zonal + cómputo central (AUTOSAR Adaptive, SOME/IP, TSN) — menos ECUs, más software compartido, más pruebas de interferencia entre funciones.
+
+### 4. Gestión de interfaces
+- Las interfaces son la causa más frecuente de defectos de integración; se tratan como artefactos de primera clase con dueño y control de cambios (ICD, diagrama N²).
+- Defectos típicos: unidades/escalas distintas, endianness, rangos no definidos, timing no especificado, versiones DBC/ICD desincronizadas.
+
+### 5. Trade Studies
+- Pasos: alternativas → criterios con peso → calificación → puntaje ponderado → **análisis de sensibilidad** (¿cambia la decisión si cambian los pesos?) → documentar supuestos.
+
+### 6. MBSE y SysML
+- El modelo (no un documento de texto disperso) es la fuente de verdad, con trazabilidad nativa requisitos ↔ arquitectura ↔ verificación.
+- MBSE modela arquitectura/requisitos (el "qué"); Simulink/Stateflow modela comportamiento ejecutable (el "cómo se comporta") — se complementan.
+
+### 7. V-Model, W-Model e integración
+- W-Model = V con una segunda V de verificación/prueba en paralelo al desarrollo — es la formalización de shift-left.
+- Estrategias de integración: bottom-up (drivers), top-down (stubs), big-bang (mayor riesgo), sandwich, incremental por funcionalidad (la más común hoy) — HIL actúa como "stub inteligente" cuando falta hardware.
+- La matriz de verificación (requisito → método → nivel → caso → resultado) es la evidencia que usa un assessor ASPICE o un auditor de seguridad.
+
+### 8. Hitos del programa (A/B/C/D-Sample, SOP)
+- Madurez creciente: A-Sample (arquitectura/viabilidad) → B-Sample (interfaces congeladas) → C-Sample (robustez, hardware final) → D-Sample/PPAP (conformidad) → SOP (producción) — nombres y criterios los define cada OEM.
+
+### 9. Análisis de seguridad y confiabilidad
+- HARA: Severidad × Exposición × Controlabilidad → ASIL (A-D) o QM — el ASIL es exigencia de seguridad derivada del riesgo, no una medida de probabilidad de falla.
+- FTTI = tiempo máximo para alcanzar el estado seguro tras una falla — se verifica con fault injection en HIL.
+- FMEA/DFMEA (inductivo; Action Priority reemplaza al RPN en AIAG-VDA) vs FTA (deductivo, del evento a las causas) vs FMEDA (métricas de hardware) vs DFA (fallas de causa común).
+- SOTIF cubre riesgos **sin falla** (limitaciones de desempeño) — un sistema sin fallas puede seguir siendo inseguro.
+
+### 10. Gestión de variantes
+- PLE: plataforma común + feature model; cada variante necesita su propia línea base de requisitos/DBC/A2L/casos de prueba.
+- El número de combinaciones crece de forma explosiva — priorizar por riesgo/volumen y usar pruebas combinatorias (pairwise).
+
+### 11. Planificación de V&V y TPMs
+- El plan de V&V de sistema es el equivalente, a nivel sistema, del plan de prueba.
+- Las TPMs (latencia, energía, masa, CPU/memoria, carga de bus) se siguen desde modelos/simulación hasta vehículo, comparadas contra el presupuesto asignado — detectar una tendencia desfavorable temprano evita sorpresas en C-Sample.

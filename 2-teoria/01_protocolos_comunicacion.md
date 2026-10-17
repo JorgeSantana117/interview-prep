@@ -1,6 +1,6 @@
 # Capítulo: Protocolos de Comunicación
 
-> Objetivo del capítulo: dominar los protocolos que sustentan tu experiencia diaria en Bosch (CAN, CAN FD, CAN-TP, UDS, XCP), tener una base sólida de Automotive Ethernet (cada vez más presente en entrevistas de ADAS/infotainment), y conocer LIN a nivel de contraste conceptual con CAN, que es pregunta casi obligada en entrevistas automotrices.
+> Objetivo del capítulo: al terminar podrás (1) explicar cómo CAN resuelve arbitraje y detección de errores a nivel eléctrico, no solo conceptual; (2) caminar a un entrevistador por un flujo completo de flashing UDS (sesión → security access → transferencia → verificación → reset) y por una transacción CAN-TP con Flow Control; (3) contrastar CAN/CAN FD con LIN, XCP y Automotive Ethernet por propósito y arquitectura, no solo por velocidad; y (4) ubicar un defecto de comunicación en la capa correcta (físico/enlace vs transporte vs aplicación) durante troubleshooting. Pesa más para **ESE y TE** (implementación, debugging y diseño de pruebas de bajo nivel); para **TFL/TM** pesa más la sección 7 (Automotive Ethernet/TSN) como tema de riesgo y estrategia de migración.
 
 ---
 
@@ -622,7 +622,11 @@ Automotive Ethernet es la adaptación de la tecnología Ethernet (la misma famil
 
 ---
 
-## Tabla comparativa rápida (útil para repaso final antes de una entrevista)
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar.
+
+### Tabla comparativa rápida
 
 | Protocolo | Capa | Propósito principal | Tú lo usas para... |
 |---|---|---|---|
@@ -632,3 +636,46 @@ Automotive Ethernet es la adaptación de la tecnología Ethernet (la misma famil
 | UDS | Aplicación | Diagnóstico, flashing, DTCs | Validar flashing y diagnóstico en Bosch/ALTEN |
 | XCP | Aplicación | Medición y calibración en desarrollo | Calibrar/medir variables en HIL sin recompilar |
 | Automotive Ethernet | Física + Enlace | Alto ancho de banda (ADAS/infotainment) | Relevante para tu rol actual con infotainment |
+
+### 1. CAN
+- Broadcast + arbitraje no destructivo: ID más bajo gana, nadie pierde datos (a diferencia de CSMA/CD).
+- Dominante siempre gana sobre recesivo por diseño eléctrico (wired-AND), no por regla lógica arbitraria.
+- Terminación: 120 Ω en cada extremo físico del bus (solo en HS-CAN), ~60 Ω total medido entre CAN H/L.
+- 5 mecanismos de detección de error (bit monitoring, bit stuffing, CRC, form check, ACK) → contadores TEC/REC → Error Active / Error Passive / Bus Off.
+- Es half-duplex y no tiene noción de dirección de nodo, solo de mensaje (ID).
+
+### 2. CAN FD
+- Payload hasta 64 bytes; el BRS (velocidad alta) aplica **solo** a la fase de datos, nunca al arbitraje.
+- DLC 9–15 no es el byte count literal: se mapea a una tabla no lineal (ej. DLC 11 → 20 bytes).
+- CRC más robusto por el payload mayor: 17 bits (≤16 bytes) o 21 bits (>16 bytes).
+- Requiere hardware compatible en **todos** los nodos del bus; un nodo no-FD no puede simplemente ignorar una trama FD.
+
+### 3. LIN
+- Maestro-esclavo, un solo hilo, sin arbitraje — el maestro controla el 100% del acceso al bus vía una schedule table.
+- Es complemento de CAN (no competencia), conectado normalmente vía un gateway.
+- Bajo costo porque los esclavos no requieren oscilador de cristal de precisión.
+
+### 4. CAN-TP
+- 4 tipos de PDU: Single Frame, First Frame, Consecutive Frame, Flow Control (nibble alto del primer byte).
+- Block Size = cuántos CF antes de pausar; STmin = tiempo mínimo entre CF — son controles de flujo distintos y complementarios.
+- CAN-TP no interpreta el contenido del mensaje; es transporte puro, UDS vive encima.
+- N-timers (N_Bs, N_Cs/N_Cr, etc.) son el primer sospechoso ante un flasheo que falla intermitentemente.
+
+### 5. UDS
+- Positive Response = Service ID + 0x40; Negative Response = 0x7F + Service ID + NRC.
+- Flujo de flashing: 0x10 (Programming Session) → 0x27 (Security Access) → 0x34 (Request Download) → 0x36 (Transfer Data)* → 0x37 (Request Transfer Exit) → 0x31 (verificación) → 0x11 (ECU Reset).
+- Security Access es seed/key algorítmico, no un login de usuario.
+- NRC 0x78 (responsePending) no es un error — significa "sigo procesando".
+- Tester Present (0x3E) mantiene la sesión activa; sin él, la ECU regresa a Default Session por timeout.
+
+### 6. XCP
+- Maestro (PC/herramienta) – esclavo (ECU); acceso directo a memoria, no a DIDs abstractos como UDS.
+- El A2L es el diccionario dirección-de-memoria ↔ nombre de variable; debe corresponder exactamente al build de software en la ECU.
+- DAQ (no Polling) es el modo real para medición continua; STIM es el inverso — el master inyecta valores a la ECU.
+- Es para desarrollo/calibración, no diagnóstico; normalmente deshabilitado en producción, a diferencia de UDS.
+
+### 7. Automotive Ethernet
+- Topología de switches (punto a punto), no bus compartido — el troubleshooting puede estar en el switch, no en el nodo.
+- SOME/IP es orientado a servicios (descubrimiento dinámico), frente al modelo señal-céntrico y estático de CAN.
+- DoIP reemplaza el rol de **CAN-TP** (transporte), no el de UDS — los servicios de aplicación no cambian.
+- Ethernet no es determinista por diseño; TSN (802.1Qbv/AS/CB) se lo añade para tráfico crítico de seguridad.

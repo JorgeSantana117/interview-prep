@@ -1,13 +1,13 @@
 # Capítulo: Estándares y Procesos Automotrices (ASPICE / AUTOSAR)
 
-> Objetivo del capítulo: ambos términos están explícitamente en tu CV ("Automotive Standards & Processes: SDLC, ISTQB, ASPICE, AUTOSAR"), pero son dos cosas de naturaleza completamente distinta que conviene no mezclar: **ASPICE es un modelo de evaluación de procesos** (qué tan bien gestionas el desarrollo), mientras que **AUTOSAR es una arquitectura de software** (cómo se estructura el código dentro de la ECU). Este capítulo retoma y formaliza las menciones de SYS.2/SWE.1 que ya aparecieron en Requirements Engineering y HIL Testing.
+> Objetivo del capítulo: al terminar podrás (1) explicar que ASPICE evalúa procesos y AUTOSAR es arquitectura de software, sin mezclarlos; (2) mapear tu trabajo diario (HIL, revisión de requisitos, gestión de defectos) a procesos SYS/SWE específicos y a su nivel de capacidad; (3) nombrar los módulos exactos del Basic Software donde vive UDS (DCM/DEM) en vez de responder genéricamente "en el software"; y (4) distinguir AUTOSAR Classic de Adaptive por sistema operativo y modelo de comunicación, ubicando tu propia experiencia (QNX/Adaptive vs HIL tradicional/Classic) en la plataforma correcta. Ambos términos están explícitamente en tu CV ("Automotive Standards & Processes: SDLC, ISTQB, ASPICE, AUTOSAR"); este capítulo retoma y formaliza las menciones de SYS.2/SWE.1 que ya aparecieron en Requirements Engineering e Ingeniería de Sistemas. Pesa para los cuatro roles: ASPICE es terreno de **TFL/TM** (nivel de capacidad, assessment, evidencia); AUTOSAR es terreno de **ESE** (dónde vive el código).
 
 ---
 
 ## Parte 1: Automotive SPICE (ASPICE)
 
 ### 1.1 Qué es
-**Automotive SPICE** (Software Process Improvement and Capability dEtermination) es un **modelo de evaluación y mejora de procesos** específico para la industria automotriz, basado en el estándar internacional **ISO/IEC 33002** (evolución de ISO/IEC 15504). No es un estándar de producto ni de software en sí — es un marco para evaluar **qué tan bien gestionada y controlada está la forma en que un proveedor desarrolla software/sistemas** para un OEM.
+**Automotive SPICE** (Software Process Improvement and Capability dEtermination) es un **modelo de evaluación y mejora de procesos** específico para la industria automotriz, basado en la serie de estándares internacionales **ISO/IEC 330xx** (evolución de ISO/IEC 15504) — *verifica el número exacto (33002 vs 33020) antes de citarlo como dato duro en entrevista, cada uno cubre una parte distinta del marco de evaluación*. No es un estándar de producto ni de software en sí — es un marco para evaluar **qué tan bien gestionada y controlada está la forma en que un proveedor desarrolla software/sistemas** para un OEM.
 
 **Por qué existe**: los OEMs (fabricantes de vehículos) necesitan confiar en que sus proveedores (como Bosch, donde trabajas) tienen procesos de desarrollo predecibles, repetibles y de calidad — no solo que "el software funcione", sino que el **proceso** que lo produjo sea confiable. ASPICE es, en esencia, el lenguaje común que la industria usa para medir y comunicar esa confianza.
 
@@ -183,3 +183,24 @@ A diferencia de Classic (pensada para microcontroladores con recursos limitados 
 ## Síntesis: cómo se relacionan ASPICE y AUTOSAR entre sí
 
 Una buena forma de cerrar este capítulo en entrevista si te piden "relaciona estos dos términos": **ASPICE te dice qué procesos debes seguir y con qué rigor** (ej. SWE.2 — Software Architectural Design, debe ejecutarse de forma gestionada y con productos de trabajo trazables) — **AUTOSAR es, en la práctica, una de las formas más comunes de la industria de *ejecutar* ese proceso SWE.2**, proveyendo una arquitectura de referencia ya estandarizada en vez de que cada proveedor diseñe su propia arquitectura desde cero. Uno es el "cómo se mide si lo hiciste bien" (ASPICE), el otro es "una forma estandarizada de hacerlo" (AUTOSAR) — no son competidores ni sustitutos, son complementarios y, de hecho, es extremadamente común que un proyecto automotriz use ambos simultáneamente.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar.
+
+### Parte 1: ASPICE
+- Evalúa **procesos**, no el producto de software en sí: PRM (qué procesos deben existir) + PAM (cómo se evalúa cada uno, vía Prácticas Base, Productos de Trabajo y Atributos de Proceso).
+- SYS.1–SYS.5 (sistema) y SWE.1–SWE.6 (software) son el V-Model con nombre de proceso — patrón espejo (SYS.2↔SYS.5, SWE.1↔SWE.6) que ASPICE audita como **trazabilidad bidireccional**.
+- 6 niveles de capacidad: 0 Incompleto → 1 Realizado → 2 Gestionado → 3 Establecido → 4 Predecible → 5 En Optimización. La mayoría de proyectos automotrices apunta a Nivel 2-3 — no es señal de deficiencia.
+- Un Work Product es la evidencia tangible de un proceso (ej. especificación de requisitos para SYS.2) — tu trabajo diario en DOORS/RQM/Jira **es** evidencia de assessment.
+- Extensiones: ASPICE for Cybersecurity (ISO/SAE 21434) y ASPICE for Safety (alineado con ISO 26262).
+
+### Parte 2: AUTOSAR
+- Es arquitectura de software, no proceso: Aplicación (SWCs, independientes del hardware) → RTE (generado, oculta si la comunicación es local o por bus) → Basic Software (Services / ECU Abstraction / MCAL / Complex Drivers).
+- UDS vive específicamente en **DCM** (sesiones/servicios de diagnóstico) y **DEM** (ciclo de vida de los DTCs) — nunca "en el software" de forma genérica.
+- VFB: la interacción entre SWCs se diseña antes de saber en qué ECU física vivirá cada uno; el mapeo posterior decide si es llamada local o mensaje de bus real.
+- Puertos P/R tipados por interfaces Sender-Receiver (dato) o Client-Server (servicio con respuesta); ARXML describe toda esa configuración.
+- Classic (microcontroladores, AUTOSAR OS tipo OSEK, señal-céntrica, config estática) vs Adaptive (microprocesadores, POSIX/Linux/QNX, SOME/IP orientado a servicios, config dinámica/OTA) — conviven, no se reemplazan.
+
+### Síntesis
+- ASPICE dice qué tan bien debes ejecutar un proceso (ej. SWE.2); AUTOSAR es una forma estandarizada común de la industria para ejecutarlo — complementarios, no competidores.

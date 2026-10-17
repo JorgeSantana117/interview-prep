@@ -1,6 +1,6 @@
 # Capítulo: HIL Testing (Hardware-in-the-Loop)
 
-> Objetivo del capítulo: este es posiblemente el tema donde tienes más experiencia de primera mano — HIL aparece en TODOS tus roles (Ford, VW/ALTEN, Bosch). El objetivo aquí no es que aprendas el concepto desde cero, sino que puedas **articular con precisión técnica** lo que ya haces intuitivamente todos los días, porque en entrevista la diferencia entre "sé hacer HIL" y "puedo explicar HIL a nivel de arquitectura" es lo que separa a un Test Engineer de un Test Function Lead.
+> Objetivo del capítulo: al terminar podrás (1) distinguir MIL/SIL/PIL/HIL/Vehicle Testing por **qué tipo de defecto detecta cada uno**, no solo por cuánto hardware usan; (2) describir los componentes de un banco HIL y para qué sirve cada uno, incluida la debug board y el modelo de planta; (3) explicar por qué el simulador debe ser determinista en tiempo real y no solo "rápido"; y (4) dar ejemplos concretos de fault injection y del ciclo de vida completo de un caso de prueba HIL. Es el tema donde ya tienes más experiencia de primera mano (Ford, VW/ALTEN, Bosch) — el reto no es aprenderlo, sino **articularlo con precisión de arquitectura**, que es justo lo que separa una respuesta de **TE** de una de **TFL**.
 
 ---
 
@@ -207,3 +207,18 @@ Ser capaz de discutir las **limitaciones** con honestidad es señal de madurez t
 - Presentar HIL como si no tuviera limitaciones — un entrevistador experimentado valora que reconozcas honestamente qué tipo de defectos HIL no puede detectar.
 - No distinguir entre los niveles de alcance (Component/Subsystem/Full-Vehicle) al hablar de tu experiencia — ser preciso sobre el nivel exacto en el que trabajaste muestra rigor técnico.
 - Olvidar mencionar la fidelidad del modelo de planta como un factor crítico — un banco HIL es tan bueno como el modelo que simula el entorno; esto conecta con tu experiencia previa en Ford desarrollando modelos Simulink/Stateflow para HIL.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar.
+
+- **Qué es HIL**: ECU real (DUT) + entorno simulado en tiempo real (sensores, actuadores, planta) — permite validar sin riesgo físico ni necesidad de vehículo completo.
+- **Escalera del V-Model**: MIL (lógica de control, sin código) → SIL (código C en PC, Back-to-Back contra MIL) → PIL (código en el procesador real, sin ECU completa) → HIL (HW+SW real completo) → Vehicle Testing (100% real). Cada nivel detecta defectos distintos; ninguno reemplaza a los demás.
+- **Costo vs velocidad**: sube el costo y baja la velocidad de iteración de forma no lineal conforme avanzas de MIL a Vehicle Testing — por eso el V-Model prioriza encontrar defectos temprano.
+- **Tipos de HIL**: por fidelidad — Signal-level (señales eléctricas) vs Mechatronic/Power HIL (cargas de potencia reales); por alcance — Component / Subsystem / Full-Vehicle HIL.
+- **Componentes del banco**: DUT, simulador de tiempo real, modelo de planta, interfaces de I/O, Load/Breakout Box (fault injection), Debug Board (JTAG/SWD, source-level debugging), interfaces de bus vehicular, PC de automatización.
+- **Determinismo en tiempo real**: el simulador debe correr al mismo ritmo que el mundo físico (1 s sim = 1 s real), no solo "rápido" — un overrun rompe la validez de la simulación.
+- **Fault injection**: open circuit, short to battery, short to ground, short entre señales adyacentes, degradación gradual.
+- **Tipos de prueba en HIL**: funcionales, comunicación, fault management, state management, robustez, runtime performance, regresión.
+- **Ciclo de vida de un caso de prueba**: requisito → diseño (vTESTstudio/DOORS) → automatización (CAPL/Robot Framework) → ejecución → análisis de resultados → reporte (Jira/RQM) → regresión continua (CI/CD).
+- **Limitaciones de HIL**: fidelidad finita del modelo de planta; no sustituye vehículo real; requiere inversión y mantenimiento continuo del modelo conforme cambia el diseño.

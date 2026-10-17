@@ -1,6 +1,6 @@
 # Capítulo: Ingeniería de Software
 
-> Objetivo del capítulo: cubrir la ingeniería de software **tal como se practica en software embebido automotriz**: cómo se diseña, se construye, se mantiene con calidad y se gestiona. Es el capítulo que más peso tiene en entrevistas de Embedded SW Engineer y en la parte técnica de un Test Engineer o Function Lead que revisa código, patches y cobertura.
+> Objetivo del capítulo: al terminar podrás (1) explicar un principio SOLID con un ejemplo concreto en C embebido y cómo facilita pruebas en SIL; (2) justificar una desviación MISRA C y distinguir qué detecta el análisis estático que la prueba dinámica no; (3) diagnosticar un fallo intermitente como posible condición de carrera, deadlock o inversión de prioridades, sabiendo qué sí y qué no resuelve `volatile`; (4) calcular cuántos casos mínimos implica una complejidad ciclomática dada; y (5) explicar *freedom from interference* y por qué las herramientas de desarrollo requieren calificación en proyectos de seguridad. Cubre la ingeniería de software **tal como se practica en software embebido automotriz**: cómo se diseña, se construye, se mantiene con calidad y se gestiona. Es el capítulo con más peso en entrevistas de **ESE**, y en la parte técnica de **TE/TFL** que revisa código, patches y cobertura.
 >
 > **Límites con otros capítulos (para no repetir):**
 > - Requisitos y trazabilidad → *Requirements Engineering*.
@@ -235,3 +235,59 @@ El marco general (identificación, línea base, control de cambios) ya lo viste 
 - Diagnosticar fallos intermitentes solo desde la capa de prueba, sin considerar timing, concurrencia o carga de bus.
 - Ignorar la calificación de herramientas y la independencia de la verificación en proyectos con ASIL alto.
 - Pensar que la arquitectura es solo un diagrama: las decisiones y sus razones (ADRs) son parte del producto.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar.
+
+### 1. Qué es y cómo se ubica
+- No es "programar": incluye requisitos, arquitectura, diseño, implementación, verificación, configuración, cambios y liberación.
+- El software recibe requisitos asignados del sistema (SYS.3 → SWE.1) y entrega software verificado de vuelta (SWE.6 → SYS.4).
+- Particularidades del embebido automotriz: recursos limitados + tiempo real, acoplamiento fuerte al hardware, larga vida/actualización costosa, seguridad funcional y ciberseguridad, evidencia formal ASPICE/ISO 26262.
+
+### 2. Modelos de ciclo de vida
+- Lado SWE del V-Model: SWE.1 → SWE.2 → SWE.3 → SWE.4 → SWE.5 → SWE.6, cada nivel verificado contra su artefacto de diseño correspondiente.
+- Espiral añade análisis de riesgo explícito por vuelta — útil para tecnología nueva (hipervisor, AUTOSAR Adaptive por primera vez).
+- Definition of Ready (listo para el sprint) ≠ Definition of Done (terminado) — en automotriz la DoD suele incluir cobertura, análisis estático limpio y trazabilidad actualizada.
+- Enfoque híbrido: V-Model por hardware/regulación + ejecución ágil del software; la evidencia ASPICE se genera desde las herramientas (Jira ↔ DOORS ↔ RQM), no con documentos manuales.
+
+### 3. Principios de diseño
+- Alta cohesión + bajo acoplamiento = más fácil de probar unitariamente.
+- SOLID en C embebido: **S** separa lógica de hardware, **O** extiende sin modificar (punteros a función), **L** mismo contrato entre drivers intercambiables, **I** interfaces pequeñas y específicas, **D** depender de abstracciones (habilita mocks en SIL).
+- Patrones típicos: HAL, máquina de estados, observer/pub-sub, productor-consumidor con buffer, watchdog, doble buffer — cuidado con memoria dinámica en sistemas críticos.
+- Refactorizar sin pruebas automatizadas que detecten regresiones no es seguro.
+
+### 4. Arquitectura de software
+- Las decisiones arquitectónicas son las más caras de cambiar y determinan los atributos de calidad (ISO 25010).
+- Estilos y su ejemplo automotriz: capas (AUTOSAR Classic), basada en componentes (SWC), orientada a eventos (SOME/IP), cliente-servidor (Adaptive), pipeline (cadena de percepción), microkernel (QNX), máquina de estados (modos de ECU).
+- Un ADR registra el porqué de una decisión — muchos "porqués" que un probador necesita para entender un comportamiento viven ahí.
+- La **testabilidad** es un atributo arquitectónico: una arquitectura que permite inyectar entradas, observar salidas internas y sustituir dependencias por mocks facilita todo el trabajo de verificación.
+
+### 5. Calidad del código
+- MISRA C: reglas mandatory/required/advisory + directivas; las desviaciones se justifican y documentan formalmente — no es una "lista de estilo".
+- El análisis estático detecta sin ejecutar (punteros, desbordamientos, complejidad); riesgo real: fatiga por exceso de falsos positivos.
+- Code review (Gerrit): cada revisión es un Work Product que evidencia SWE.3/SWE.4 — se acerca a una inspección si tiene lista de verificación y roles definidos.
+- Programación defensiva: validar entradas, manejar errores/timeouts, assertions, valores por defecto seguros — se verifica después con robustez y fault injection.
+- Prueba unitaria (SWE.4) con stubs/mocks; TDD es viable si la lógica está separada del hardware.
+
+### 6. Métricas de software
+- Complejidad ciclomática `V(G) = E − N + 2P`: indica el número mínimo de casos para cubrir los caminos linealmente independientes.
+- Una métrica sin contexto se manipula (ej. cobertura alta con pruebas sin aserciones) — se interpretan en conjunto y como tendencia, nunca aisladas.
+
+### 7. Concurrencia y tiempo real
+- Condición de carrera, deadlock, inversión de prioridades (mitigada con herencia o techo de prioridad) — son defectos intermitentes que dependen del timing.
+- `volatile` solo evita optimizaciones del compilador — **no** garantiza atomicidad ni sincronización.
+- Un fallo intermitente que "pasa manualmente" suele apuntar a timing/concurrencia, no a un error de lógica funcional.
+
+### 8. Software y seguridad funcional (ISO 26262 – Parte 6)
+- El rigor de diseño/codificación y de cobertura estructural (sentencia → rama → MC/DC) crece con el ASIL.
+- *Freedom from interference*: software de distinto ASIL en el mismo procesador debe aislarse (MPU, monitores de tiempo, hipervisores).
+- Las herramientas que podrían introducir o dejar pasar errores (compiladores, generadores de código) requieren clasificación y calificación según su impacto.
+
+### 9. Gestión de configuración, cambios y liberaciones
+- Línea base de software = código + configuración + herramientas (versión del compilador) + bibliotecas — debe poder reproducir el build exacto.
+- Trunk-based (integración frecuente, ramas cortas) vs GitFlow (ramas de feature/develop/release/hotfix).
+- Quality gates: cobertura, violaciones de análisis estático, defectos abiertos por severidad, resultados de regresión, cumplimiento ASPICE.
+
+### 10. Roles y colaboración
+- Software Architect (custodia la arquitectura), Developer/ESE (diseña y verifica unidades), Test Engineer/TFL (integración, calificación, estrategia), Safety/Cybersecurity Engineer (requisitos y evidencia de seguridad) — más los roles ágiles (PO, Scrum Master, equipo).

@@ -1,6 +1,6 @@
 # Capítulo: CI/CD y Control de Versiones (Git, Gerrit, GitHub, Bitbucket, Jenkins, Docker)
 
-> Objetivo del capítulo: dominar las herramientas y el razonamiento detrás de los **pipelines de integración y entrega continua** y del **control de versiones**, aplicados a software embebido y a **automatización de HIL**. Todas estas herramientas están en tu CV, así que en entrevista se espera que expliques no solo qué comandos usas sino **por qué un pipeline está diseñado de cierta forma** y cómo resuelves los problemas típicos.
+> Objetivo del capítulo: al terminar podrás (1) explicar el modelo mental de Git (commits, ramas como punteros, HEAD) y elegir entre merge/rebase/cherry-pick/revert según el contexto; (2) describir el flujo completo de un cambio en Gerrit (Change-Id, patch sets, votos Code-Review/Verified) y contrastarlo con un pull request; (3) diseñar las etapas de un pipeline embebido con el criterio "rápido primero, fallar rápido" e integrar un banco HIL (agente, bloqueo de recursos, flasheo, regresión); (4) usar `git bisect` para localizar una regresión en un número logarítmico de pasos; y (5) explicar por qué CANoe no se conteneriza pero SIL/análisis estático sí, y qué hace reproducible un build. Todas estas herramientas están en tu CV — en entrevista se espera que expliques no solo qué comandos usas sino **por qué un pipeline está diseñado de cierta forma** y cómo resuelves los problemas típicos.
 >
 > **Límites con otros capítulos (para no repetir):**
 > - Principios de DevOps (cultura, retroalimentación, métricas DORA a fondo), nube y contenedores *cloud-native* → irán en *DevOps y Cómputo en la Nube* (Fase 5). Aquí se usan las herramientas concretas en el contexto automotriz.
@@ -371,3 +371,49 @@ docker images ; docker ps ; docker logs <contenedor> ; docker exec -it <contened
 - Confundir entrega continua con despliegue continuo y proponer despliegue automático a producción en una ECU de seguridad.
 - Versionar binarios grandes directamente en Git sin LFS ni repositorio de artefactos.
 - No vincular builds, commits, pruebas y artefactos, perdiendo la trazabilidad que exige ASPICE.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar. (Para cálculos y mapeo síntoma→causa, usa también los bloques "Ejercicios de práctica" y "Del síntoma a la causa probable" de arriba — no se repiten aquí.)
+
+### 1. Control de versiones con Git
+- Git es distribuido; un commit es una instantánea (grafo dirigido acíclico); una rama es solo un **puntero** móvil.
+- Merge conserva la historia real (con bifurcaciones); rebase la reescribe para dejarla lineal — regla de oro: nunca rebasar ramas públicas/compartidas.
+- `git revert` (deshace con un commit nuevo, seguro en historia compartida) ≠ `git reset --hard` (mueve la rama y descarta cambios).
+- `git bisect` encuentra el commit culpable en pasos logarítmicos (`⌈log₂ N⌉`); con script automatizado, `git bisect run`.
+- Binarios/modelos grandes: Git LFS o un repositorio de artefactos (Artifactory/Nexus) — nunca versionarlos directo.
+
+### 2. Estrategias de ramificación
+- Trunk-based (ramas cortas, feature flags) / GitHub Flow (`main` siempre desplegable) / GitFlow (`develop`/`feature`/`release`/`hotfix`) / ramas de liberación por muestra o cliente.
+- Realidad automotriz: rama principal + ramas de liberación de larga vida por hito/cliente, con cherry-pick/backport y regresión por rama.
+- Cada entrega se etiqueta (semantic versioning) y se vincula a sus pruebas, defectos conocidos y notas de versión.
+
+### 3. Revisión de código: Gerrit, GitHub, Bitbucket
+- Gerrit revisa un **cambio** (commit con Change-Id); cada actualización (`commit --amend` + push) genera un nuevo **patch set** — a diferencia de GitHub/Bitbucket, que revisan una rama completa con varios commits.
+- Votos de Gerrit: **Code-Review** (−2 a +2, humano) y **Verified** (−1 a +1, normalmente automático vía Jenkins).
+- Las protecciones de rama (CI verde + revisión obligatoria, sin *push* directo) son evidencia de proceso para ASPICE.
+
+### 4. CI/CD
+- Integración Continua (verificar automáticamente en cada cambio) → Entrega Continua (siempre liberable, despliegue manual) → Despliegue Continuo (automático) — en ECUs de producción casi nunca se llega al despliegue continuo.
+- Pipeline como código (ej. `Jenkinsfile`), versionado y revisado como cualquier código.
+- Criterio "rápido primero, fallar rápido": las etapas baratas (análisis estático, unitarias) van al inicio; las costosas (regresión en HIL) después o con menor frecuencia.
+- Los bancos HIL son recursos físicos escasos: requieren bloqueo de recursos y agentes dedicados (por etiqueta); las pruebas *flaky* y los fallos de infraestructura deben distinguirse de los fallos reales del software.
+
+### 5. Jenkins
+- Controlador (configuración, cola) + agentes (ejecutan trabajos, por etiqueta) + ejecutores (trabajos simultáneos por agente) + plugins.
+- Pipeline declarativo (`Jenkinsfile`, estructura fija) es preferible al *scripted* o al *freestyle* por legibilidad y versionado.
+- Multibranch Pipeline descubre ramas automáticamente; las Shared Libraries reutilizan código de pipeline entre proyectos.
+- Las credenciales siempre viven en el almacén de Jenkins, nunca en el repositorio.
+
+### 6. Docker
+- Imagen (plantilla inmutable en capas) vs contenedor (instancia en ejecución); el Dockerfile define las capas — su orden importa para la caché.
+- El contenedor comparte el kernel del anfitrión (ligero, arranque en segundos) vs la VM (kernel propio vía hipervisor, más aislamiento, más pesada).
+- Fijar versiones (nunca `latest`) y ordenar capas (lo que cambia poco primero) para reproducibilidad y aprovechamiento de caché.
+
+### 7. Límites de Docker y qué hace bueno a un pipeline
+- CANoe y el hardware Vector corren en Windows con drivers específicos — no se contenerizan; los bancos HIL usan agentes Windows dedicados. Docker sí sirve para compilación cruzada, análisis estático, SIL y scripts sin dependencia de hardware.
+- Un buen pipeline es rápido, **determinista** (mismo commit → mismo resultado), trazable (build ↔ commit ↔ pruebas ↔ artefactos) y mantenible como código.
+- Los registros de pipeline son evidencia de proceso para ASPICE (SWE.4–6, SUP.8–10); las herramientas de CI también pueden requerir evaluación en proyectos de seguridad.
+
+### 8. Síntoma → causa
+- La tabla de este capítulo (compila local pero falla en CI, build antiguo irreproducible, pruebas HIL intermitentes, dos ejecuciones en el mismo banco) es el puente directo entre un síntoma de pipeline y su causa probable.

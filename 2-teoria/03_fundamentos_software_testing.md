@@ -1,6 +1,6 @@
 # Capítulo: Fundamentos de Software Testing (ISTQB CTFL 4.0)
 
-> Objetivo del capítulo: a diferencia de Protocolos y HIL (donde tu experiencia va por delante de la teoría), aquí es al revés — probablemente ya tienes la certificación ISTQB, pero este es el tema donde los entrevistadores hacen las preguntas más "tramposas" y sutiles, porque el syllabus está lleno de distinciones finas (verificación vs validación, prueba vs depuración, cobertura de sentencias vs de ramas) que se prestan a preguntas de opción múltiple con matices — el mismo tipo de pregunta que verás en una entrevista técnica bien diseñada. Basé este capítulo en tu documento CTFL-4.0 y agregué contexto adicional, ejemplos automotrices y las conexiones con lo que ya sabes de HIL y Protocolos.
+> Objetivo del capítulo: al terminar podrás (1) distinguir sin dudar los pares conceptuales que generan preguntas trampa (verificación/validación, severidad/prioridad, confirmación/regresión, sentencia/rama, niveles vs tipos de prueba); (2) resolver de memoria los ejercicios numéricos típicos — AVF de 2/3 valores, cobertura de tabla de decisión, Tres Puntos (E, SD); (3) ubicar tu propio trabajo de HIL dentro de los 5 niveles de prueba y los 4 cuadrantes ágiles; y (4) defender por qué la automatización no sustituye el juicio del probador. A diferencia de Protocolos y HIL (donde tu experiencia va por delante de la teoría), aquí ya tienes la base (certificación ISTQB) — el reto es **precisión de vocabulario y velocidad en los ejercicios numéricos**, no conceptos nuevos. Pesa para los cuatro roles, con más peso en **TE** (técnicas y métricas) y **TFL/TM** (gestión de riesgo, estimación, informes).
 
 ---
 
@@ -694,3 +694,53 @@ El uso de software para realizar o apoyar actividades de prueba.
 ## Errores comunes — Sección 6
 - Pensar que automatizar es siempre mejor que probar manualmente — el syllabus señala explícitamente que usar una herramienta cuando la prueba manual es más apropiada es un riesgo real.
 - Ignorar la dependencia del proveedor como un riesgo estratégico, no solo técnico.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar.
+
+### 1. Fundamentos de la Prueba
+- Verificación (cumple la especificación) vs Validación (satisface la necesidad real) — se puede pasar una y fallar la otra.
+- Depurar **no** es parte de probar: reproducir → diagnosticar → corregir. Confirmación valida ese defecto específico; regresión valida que nada más se rompió.
+- 7 principios: muestra presencia de defectos (no su ausencia), exhaustiva es imposible, temprana ahorra tiempo/dinero, los defectos se agrupan, pesticide paradox, depende del contexto, ausencia de defectos ≠ éxito.
+- Caso de prueba (resultados esperados) ≠ guion de prueba (instrucciones de ejecución) ≠ juego de pruebas (grupo) ≠ contrato de prueba (pacto/objetivo).
+- 4 niveles de independencia: sin independencia → mismo equipo → ajeno al equipo → externo a la organización.
+
+### 2. La Prueba a lo largo del CVDS
+- V-Model: la prueba dinámica no puede iniciar sin código, aunque otras actividades de prueba sí; Ágil: documentación ligera + automatización amplia.
+- TDD (código después del test, nivel componente) vs ATDD (criterios de aceptación, antes de desarrollar) vs BDD (Given/When/Then).
+- Shift-left: revisar la especificación, casos antes del código, no funcionales desde componente, IC/EC, análisis estático antes de dinámico.
+- 5 niveles de prueba: Componente → Integración de Componente (ambos del desarrollador) → Sistema → Integración de Sistema (ambos del probador) → Aceptación (implicados). Tu HIL vive en Sistema + Integración de Sistema.
+- Niveles de prueba (etapas) y tipos de prueba (funcional/no funcional/caja negra/blanca) son clasificaciones **ortogonales** — no confundir.
+
+### 3. Prueba Estática
+- No ejecuta software; encuentra defectos **directamente** (no provoca fallos primero); aplica a verificación y a validación.
+- Detecta lo que la dinámica no puede: defectos de requisitos, código poco ejecutado, vacíos de trazabilidad/cobertura.
+- Proceso de revisión: planificación → inicio → revisión individual → comunicación y análisis → corrección.
+- Tipos de revisión, de menos a más formal: informal → guiada (la dirige el **autor**) → técnica (la dirige un **moderador**) → inspección (listas de comprobación **obligatorias**).
+- Anomalía ≠ defecto confirmado — toda anomalía se analiza antes de confirmarse como tal.
+
+### 4. Técnicas de Prueba
+- Caja negra (comportamiento, independiente de implementación) / caja blanca (estructura interna, solo posible después del diseño) / basada en experiencia (se complementan, no sustituyen).
+- Partición de Equivalencia + Cada Elección = cada partición al menos una vez, **no** todas las combinaciones (sería exponencial).
+- AVF solo en particiones ordenadas: 2 valores = frontera + 1 vecino; 3 valores = frontera + 2 vecinos (uno de cada lado).
+- Tabla de decisión: cobertura = columnas practicadas / columnas factibles; se pueden eliminar columnas lógicamente imposibles.
+- Transición de estados, de más débil a más fuerte: todos los estados → transiciones válidas (0-switch) → todas las transiciones válidas + inválidas.
+- Sentencia vs Rama: `if (x > y)` necesita 1 caso para 100% sentencia, 2 casos para 100% rama — rama **subsume** a sentencia, no al revés.
+- Caja blanca no detecta defectos de omisión (requisito no implementado = no hay código que cubrir).
+- Prueba exploratoria **sí** es documentada (contrato de prueba) y **sí** es dinámica — no es "probar al azar".
+- INVEST (historias de usuario) y las 3 C (Card, Conversation, Confirmation); en ATDD se crean primero los casos positivos, luego los negativos.
+
+### 5. Gestión de las Actividades de Prueba
+- Criterios de entrada (precondiciones) vs salida (Definition of Done); quedarse sin tiempo/presupuesto es un criterio de salida válido.
+- Tres Puntos: `E = (Po + 4Pm + Pp) / 6`, `SD = (Pp − Po) / 6`.
+- Priorización por riesgo / cobertura (ojo: la variante de cobertura **adicional**, no absoluta) / requisitos.
+- Pirámide de prueba: capa inferior = muchas pruebas rápidas y aisladas; capa superior = pocas, lentas, end-to-end.
+- Cuadrantes ágiles: Q1 tecnología+apoya (componente automatizado), Q2 negocio+apoya (funcional), Q3 negocio+critica (exploratoria/usabilidad), Q4 tecnología+critica (humo/no funcional).
+- Riesgo = Probabilidad × Impacto (cuantitativo) o matriz (cualitativo); riesgos de **proyecto** ≠ riesgos de **producto**.
+- Gestión de Configuración: línea base + control de cambios formal → puedes volver a una versión anterior para reproducir resultados.
+- Severidad (impacto técnico/negocio) ≠ Prioridad (orden de corrección) de un defecto — no siempre coinciden.
+
+### 6. Herramientas de Prueba
+- Clasificación por propósito: gestión, estática, diseño/implementación, ejecución/cobertura, no funcionales, DevOps, colaboración, escalabilidad.
+- La automatización ahorra tiempo y da objetividad, pero **no** elimina la necesidad de pensamiento crítico humano ni de prueba manual; la dependencia del proveedor es un riesgo real.

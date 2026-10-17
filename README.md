@@ -50,9 +50,9 @@ interview-prep/
 | 02 | 02_hil_testing.md | 02_preguntas_entrevista_hil_testing.md | HIL Testing (MIL, SIL, PIL, HIL, planta, inyección de fallas) |
 | 03 | 03_fundamentos_software_testing.md | 03_preguntas_entrevista_fundamentos_testing.md | Fundamentos de Software Testing (ISTQB CTFL 4.0) |
 | 04 | 04_herramientas_testing_automatizacion.md | 04_preguntas_entrevista_herramientas_testing.md | Herramientas de testing y automatización (CANoe, VT System, CAPL, vTESTstudio, Robot Framework) |
-| 05 | 05_requirements_engineering.md | 05_preguntas_entrevista_requirements_engineering.md | Requirements Engineering |
-| 06 | 06_aspice_autosar.md | 06_preguntas_entrevista_aspice_autosar.md | ASPICE y AUTOSAR |
-| 07 | 07_ingenieria_de_sistemas.md | 07_preguntas_entrevista_ingenieria_sistemas.md | Ingeniería de Sistemas |
+| 05 | 05_ingenieria_de_sistemas.md | 05_preguntas_entrevista_ingenieria_sistemas.md | Ingeniería de Sistemas |
+| 06 | 06_requirements_engineering.md | 06_preguntas_entrevista_requirements_engineering.md | Requirements Engineering |
+| 07 | 07_aspice_autosar.md | 07_preguntas_entrevista_aspice_autosar.md | ASPICE y AUTOSAR |
 | 08 | 08_ingenieria_de_software.md | 08_preguntas_entrevista_ingenieria_software.md | Ingeniería de Software |
 | 09 | 09_sistemas_embebidos.md | 09_preguntas_entrevista_sistemas_embebidos.md | Sistemas Embebidos |
 | 10 | 10_sistemas_operativos_embebidos.md | 10_preguntas_entrevista_so_embebidos.md | Sistemas Operativos Embebidos (RTOS, OSEK, Linux, QNX) |

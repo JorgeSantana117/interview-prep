@@ -1,6 +1,6 @@
 # Tema: Ingeniería de Sistemas
 
-> Material de estudio base: capítulo `08_ingenieria_de_sistemas.md`. Mismo formato que los bancos anteriores. Tema muy valorado en roles de Test Function Lead y Test Manager, donde se espera visión de sistema, seguridad y programa.
+> Material de estudio base: capítulo `05_ingenieria_de_sistemas.md`. Mismo formato que los bancos anteriores. Tema muy valorado en roles de Test Function Lead y Test Manager, donde se espera visión de sistema, seguridad y programa.
 
 > Estructura recomendada para responder:
 > - *Concepto:* definición breve → por qué importa → ejemplo propio → limitación.

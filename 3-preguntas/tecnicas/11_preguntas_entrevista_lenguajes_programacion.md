@@ -1,6 +1,6 @@
 # Tema: Lenguajes de Programación (C, Python, CAPL, MATLAB)
 
-> Material de estudio base: capítulo `12_lenguajes_programacion.md`. Mismo formato que los bancos anteriores. En este tema es común que te pidan escribir o leer código: practica a mano o en pizarra, sin autocompletado.
+> Material de estudio base: capítulo `11_lenguajes_programacion.md`. Mismo formato que los bancos anteriores. En este tema es común que te pidan escribir o leer código: practica a mano o en pizarra, sin autocompletado.
 
 > Estructura recomendada para responder:
 > - *Concepto:* definición breve → por qué importa → ejemplo propio → limitación.

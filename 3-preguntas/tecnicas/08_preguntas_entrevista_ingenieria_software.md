@@ -1,6 +1,6 @@
 # Tema: Ingeniería de Software
 
-> Material de estudio base: capítulo `09_ingenieria_de_software.md`. Mismo formato que los bancos anteriores. Tema central para el rol de Embedded Software Engineer y, en menor profundidad, para quien lidera pruebas.
+> Material de estudio base: capítulo `08_ingenieria_de_software.md`. Mismo formato que los bancos anteriores. Tema central para el rol de Embedded Software Engineer y, en menor profundidad, para quien lidera pruebas.
 
 > Estructura recomendada para responder:
 > - *Concepto:* definición breve → por qué importa → ejemplo propio → limitación.

@@ -1,6 +1,6 @@
 # Tema: CI/CD y Control de Versiones (Git, Gerrit, Bitbucket, Jenkins, Docker)
 
-> Material de estudio base: capítulo `14_cicd_control_versiones.md`. Mismo formato que los bancos anteriores. Este es un tema donde tu CV es sólido (Docker, Jenkins, Git/Gerrit/Bitbucket): lleva ejemplos reales de pipelines y de problemas que resolviste.
+> Material de estudio base: capítulo `13_cicd_control_versiones.md`. Mismo formato que los bancos anteriores. Este es un tema donde tu CV es sólido (Docker, Jenkins, Git/Gerrit/Bitbucket): lleva ejemplos reales de pipelines y de problemas que resolviste.
 
 > Estructura recomendada para responder:
 > - *Concepto:* definición breve → por qué importa → ejemplo propio → limitación.

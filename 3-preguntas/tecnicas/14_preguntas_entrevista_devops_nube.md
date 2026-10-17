@@ -1,6 +1,6 @@
 # Tema: DevOps y Cómputo en la Nube
 
-> Material de estudio base: capítulo `15_devops_computo_nube.md`. Mismo formato que los bancos anteriores. Aquí conecta tu experiencia en Docker/Jenkins con la nube, el vehículo definido por software (SDV) y tu maestría en IA (MLOps).
+> Material de estudio base: capítulo `14_devops_computo_nube.md`. Mismo formato que los bancos anteriores. Aquí conecta tu experiencia en Docker/Jenkins con la nube, el vehículo definido por software (SDV) y tu maestría en IA (MLOps).
 
 > Estructura recomendada para responder:
 > - *Concepto:* definición breve → por qué importa → ejemplo propio → limitación.

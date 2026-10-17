@@ -1,6 +1,6 @@
 # Tema: HIL Testing (MIL, SIL, PIL, HIL, planta, fault injection, bancos)
 
-> Material de estudio base: capítulo `03_hil_testing.md`. Este banco sigue el mismo formato que el de Protocolos de Comunicación: preguntas de escenario, troubleshooting y experiencia, organizadas por rol, con los puntos que un entrevistador espera escuchar. No memorices respuestas: construye la tuya con tus palabras y, cuando puedas, con un ejemplo real de Bosch, ALTEN, VW o Ford.
+> Material de estudio base: capítulo `02_hil_testing.md`. Este banco sigue el mismo formato que el de Protocolos de Comunicación: preguntas de escenario, troubleshooting y experiencia, organizadas por rol, con los puntos que un entrevistador espera escuchar. No memorices respuestas: construye la tuya con tus palabras y, cuando puedas, con un ejemplo real de Bosch, ALTEN, VW o Ford.
 
 > Estructura recomendada para responder:
 > - *Concepto:* definición breve → por qué importa → ejemplo propio → limitación o trade-off.

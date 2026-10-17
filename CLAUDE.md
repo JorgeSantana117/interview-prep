@@ -14,8 +14,8 @@ ESE (Embedded Software Engineer), TE (Test Engineer), TFL (Embedded Software Tes
 
 ## Estructura del repositorio
 - `1-perfil/` — `JorgeSantana_Resume.pdf`, `presentacion.md`, `historias-star.md`, `datos-hr.md`. Es la fuente de verdad sobre el usuario.
-- `2-teoria/NN-tema.md` — 14 capítulos de teoría.
-- `3-preguntas/tecnicas/NN-tema.md` — 14 bancos de preguntas; mismo número y nombre que la teoría.
+- `2-teoria/NN_tema.md` — 14 capítulos de teoría.
+- `3-preguntas/tecnicas/NN_preguntas_entrevista_tema.md` — 14 bancos de preguntas; mismo número y tema que la teoría.
 - `3-preguntas/comportamiento/` — `guia-star.md` y `preguntas.md`.
 - `3-preguntas/hr/preguntas.md` — cómo responder las preguntas de HR; los datos están en `1-perfil/datos-hr.md`.
 - `4-simulacion/` — `instrucciones.md` y `registros/` (una nota por sesión).
@@ -32,7 +32,12 @@ ESE (Embedded Software Engineer), TE (Test Engineer), TFL (Embedded Software Tes
 Numeración consecutiva, sin saltos, dentro de cada sección.
 
 ## Formato de la teoría (`2-teoria`)
-Secciones numeradas sin saltos ni duplicados; al final, preguntas de teoría, y errores comunes. Evitar duplicar contenido entre capítulos: usar referencias cruzadas.
+1. Título: `# Capítulo: <nombre>`.
+2. Nota inicial `> Objetivo del capítulo:` — qué va a poder **hacer o explicar** el usuario al terminar (no solo qué temas se cubren). Si el capítulo tiene un rol o roles donde más se usa (ESE/TE/TFL/TM), mencionarlo aquí para conectarlo con el banco de preguntas correspondiente.
+3. Secciones numeradas sin saltos ni duplicados.
+4. Por sección o subtema (cuando el capítulo tiene varios bloques grandes): `### Preguntas de teoría` y `### Errores comunes`.
+5. `## Puntos clave` — sección obligatoria al final del capítulo completo (una sola vez, no por subtema): lista breve tipo acordeón para repaso rápido antes de una entrevista, un bullet por tema/subtema numerado, sin reexplicar — solo el dato o la conclusión más importante.
+Evitar duplicar contenido entre capítulos: usar referencias cruzadas.
 
 ## Reglas para `1-perfil` y `3-preguntas/comportamiento`
 - Las historias se construyen solo con hechos que el usuario cuente o que estén en su CV. Marca con `[COMPLETAR]` lo que falte (números, fechas, nombres). No inventes métricas.

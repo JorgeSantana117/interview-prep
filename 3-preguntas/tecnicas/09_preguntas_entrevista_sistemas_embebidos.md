@@ -1,6 +1,6 @@
 # Tema: Sistemas Embebidos
 
-> Material de estudio base: capítulo `10_sistemas_embebidos.md`. Mismo formato que los bancos anteriores. Para el rol de Embedded Software Engineer este es un tema central; para los demás, se espera que entiendas el hardware lo suficiente para diagnosticar síntomas observados en el banco.
+> Material de estudio base: capítulo `09_sistemas_embebidos.md`. Mismo formato que los bancos anteriores. Para el rol de Embedded Software Engineer este es un tema central; para los demás, se espera que entiendas el hardware lo suficiente para diagnosticar síntomas observados en el banco.
 
 > Estructura recomendada para responder:
 > - *Concepto:* definición breve → por qué importa → ejemplo propio → limitación.

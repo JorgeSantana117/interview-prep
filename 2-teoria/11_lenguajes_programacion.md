@@ -1,6 +1,6 @@
 # Capítulo: Lenguajes de Programación
 
-> Objetivo del capítulo: dominar los lenguajes que realmente usas (**Python** y **CAPL**), los que aparecen en tu entorno de modelado y análisis (**MATLAB**) y el que casi seguro te preguntarán en una entrevista de Embedded SW Engineer (**C**), junto con las **buenas prácticas** que separan un script que "funciona" de un código mantenible. En entrevistas de este tipo suelen pedir escribir o corregir fragmentos cortos, así que el capítulo incluye ejemplos y ejercicios.
+> Objetivo del capítulo: al terminar podrás (1) justificar en segundos qué lenguaje usarías para una tarea dada (simular un nodo, orquestar una regresión, analizar un log de 2 GB); (2) explicar por qué `int` es de 16 bits en CAPL y qué otras trampas de tipos/timers tiene; (3) escribir de memoria manipulación de bits en C (extraer un campo, contar bits, verificar endianness) y explicar un caso de comportamiento indefinido; (4) detectar en un fragmento Python los errores clásicos (argumento mutable por defecto, `except` desnudo, comparar flotantes con `==`); y (5) defender las características de un script de prueba mantenible (esperas por condición, independencia entre pruebas, datos separados del código). Dominas los lenguajes que realmente usas (**Python** y **CAPL**), los de tu entorno de modelado (**MATLAB**) y el que casi seguro te preguntarán en una entrevista de Embedded SW Engineer (**C**). Incluye ejemplos y ejercicios porque en este tipo de entrevista suelen pedir escribir o corregir fragmentos cortos.
 >
 > **Nota sobre el alcance:** tu estructura original incluía Python, CAPL, MATLAB y buenas prácticas. Agregué una sección de **C embebido** porque no aparece en tu CV pero es el lenguaje base de los sistemas que pruebas y de las preguntas de código de un Embedded SW Engineer. Si prefieres quitarla, se puede mover a un apéndice.
 >
@@ -502,3 +502,42 @@ Medir antes de optimizar. En Python, usar generadores y estructuras adecuadas pa
 - Repetir una prueba intermitente hasta que pase en lugar de hallar la causa.
 - No revisar ni versionar los scripts de prueba con el mismo rigor que el código de producción.
 - Elegir un lenguaje por costumbre en vez de por su adecuación a la capa del problema.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar. (Para los fragmentos de código y cálculos, usa también los "Ejercicios de práctica" de arriba — no se repiten aquí.)
+
+### 1. Panorama: qué lenguaje para qué
+- CAPL cerca del bus, Python para orquestar/analizar, MATLAB para datos numéricos y modelos, C para razonar sobre el software bajo prueba — se elige por capa del problema, no por costumbre.
+
+### 2. Python
+- Inmutables: `int`/`float`/`str`/`bytes`/`tuple`; mutables: `list`/`dict`/`set` — el error clásico es un argumento por defecto mutable (`def f(x, lista=[])`).
+- `==` compara valor, `is` compara identidad; comparar flotantes requiere `math.isclose`, nunca `==`.
+- GIL: `threading` no acelera trabajo CPU-bound pero sí sirve para I/O-bound; `multiprocessing` evita el GIL en cálculo pesado; `asyncio` para muchas E/S simultáneas.
+- Esperar con condición + timeout en vez de `sleep` fijo — evita pruebas lentas e intermitentes.
+- Librerías clave: `python-can`/`cantools`/`can-isotp`/`udsoncan` (bus y UDS), `asammdf` (logs `.mf4`), `pywin32` (COM de CANoe).
+
+### 3. CAPL
+- `int` es de **16 bits con signo** en CAPL (trampa clásica) — se desborda en 32767; usar `long`/`dword` para contadores largos.
+- `msTimer` en milisegundos, `timer` en segundos; un timer **no se repite solo** — hay que rearmarlo dentro de su propio handler.
+- Los handlers se ejecutan uno a la vez sin interrumpirse entre sí — deben ser cortos, sin bucles ni esperas bloqueantes.
+- `$Señal` (valor físico decodificado) ≠ `@VariableDeEntorno` ≠ `@sysvar::` (variable de sistema) — confundirlos es un error típico.
+
+### 4. MATLAB
+- Indexación **desde 1**, rangos inclusivos (`v(2:4)` = elementos 2, 3 y 4) — error típico al migrar desde Python/C.
+- Elemento a elemento (`.*`, `./`) vs matricial (`*`, `/`) — confundirlas es un error típico.
+- Vectorizar en vez de usar bucles: más claro y más rápido.
+- MATLAB gana cuando el flujo gira en torno a Simulink/toolboxes; Python gana en CI, bancos de prueba y automatización general sin depender de licencias.
+
+### 5. C para sistemas embebidos
+- Tipos de ancho fijo (`stdint.h`) evitan la ambigüedad de tamaño de `int` entre plataformas.
+- `volatile` evita optimizaciones del compilador — **no** garantiza atomicidad ni sincronización.
+- El tamaño de un `struct` puede ser mayor que la suma de sus campos por alineación/*padding* — reordenar los campos lo reduce.
+- Comportamiento indefinido (UB): desbordamiento con signo, acceso fuera de límites, variables sin inicializar, dereferenciar `NULL`, violar *strict aliasing* — el compilador puede asumir que no ocurre.
+- Evitar `malloc` en sistemas críticos: fragmentación y no determinismo.
+
+### 6. Buenas prácticas de programación
+- Legibilidad primero, DRY/KISS/YAGNI, sin números mágicos, comentar el **porqué**, no el qué.
+- Código de prueba mantenible: capas (casos → acciones reutilizables → drivers), pruebas independientes con *setup/teardown*, esperas por condición + timeout, datos separados del código, logging con contexto completo.
+- Una prueba *flaky* se investiga hasta encontrar la causa — nunca se repite hasta que pase.
+- Los scripts de prueba son Work Products: se revisan y versionan con el mismo rigor que el código de producción.

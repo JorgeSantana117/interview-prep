@@ -1,6 +1,6 @@
 # Tema: Sistemas Operativos Embebidos (RTOS, OSEK/AUTOSAR OS, Linux, QNX)
 
-> Material de estudio base: capítulo `11_sistemas_operativos_embebidos.md`. Mismo formato que los bancos anteriores. Tu perfil incluye Linux y QNX; prepara ejemplos propios de comandos y análisis que hayas usado.
+> Material de estudio base: capítulo `10_sistemas_operativos_embebidos.md`. Mismo formato que los bancos anteriores. Tu perfil incluye Linux y QNX; prepara ejemplos propios de comandos y análisis que hayas usado.
 
 > Estructura recomendada para responder:
 > - *Concepto:* definición breve → por qué importa → ejemplo propio → limitación.

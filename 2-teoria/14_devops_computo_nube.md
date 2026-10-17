@@ -1,6 +1,6 @@
 # Capítulo: DevOps y Cómputo en la Nube
 
-> Objetivo del capítulo: completar tu perfil con la **cultura y las prácticas DevOps** y con los **conceptos de nube** que hoy atraviesan la industria automotriz (vehículo definido por software, OTA, datos de flota, simulación a escala). No están en tu CV, así que el enfoque es **conceptual y conectado con lo que ya haces**: en entrevista conviene decir con honestidad "mi experiencia directa es en CI/CD con Jenkins y Docker, y conozco estos conceptos de nube" en lugar de aparentar experiencia práctica que no tienes. Aun así, entender el panorama te posiciona para roles con más exposición a infraestructura.
+> Objetivo del capítulo: al terminar podrás (1) explicar las 4 métricas DORA y por qué "frecuencia de despliegue" debe adaptarse a una ECU que no se libera a diario; (2) distinguir IaaS/PaaS/FaaS/SaaS y el modelo de responsabilidad compartida; (3) calcular un presupuesto de error a partir de un SLO, y el tiempo/costo de una suite SIL paralelizada en la nube; (4) explicar qué sí y qué no puede moverse a la nube en tu flujo de pruebas (HIL nunca, SIL/vECU sí); y (5) describir los riesgos y el marco regulatorio de una actualización OTA (Uptane, UN R155/R156). Completa tu perfil con la **cultura y las prácticas DevOps** y con los **conceptos de nube** que hoy atraviesan la industria automotriz (vehículo definido por software, OTA, datos de flota, simulación a escala). No están en tu CV, así que el enfoque es **conceptual y conectado con lo que ya haces**: en entrevista conviene decir con honestidad "mi experiencia directa es en CI/CD con Jenkins y Docker, y conozco estos conceptos de nube" en lugar de aparentar experiencia práctica que no tienes.
 >
 > **Límites con otros capítulos (para no repetir):**
 > - Git, Gerrit, Jenkins, Docker y diseño de pipelines → ya en *CI/CD y Control de Versiones*. Aquí: la cultura y las prácticas que los rodean, y lo que viene después (nube, orquestación, observabilidad).
@@ -385,3 +385,54 @@ Como tu perfil incluye una maestría en IA aplicada, vale la pena mencionar cóm
 - Tratar una actualización OTA como "otro despliegue": exige seguridad, reversión, compatibilidad y verificación de seguridad funcional.
 - Presentar experiencia en nube que no se tiene en lugar de explicar con honestidad lo que sí se domina y cómo se relaciona.
 - Olvidar que los modelos de ML requieren versionado de datos, monitoreo de deriva y evidencia de seguridad, no solo precisión en un conjunto de prueba.
+
+## Puntos clave
+
+Repaso rápido antes de una entrevista — un bullet por idea, sin reexplicar. (Para cálculos y mapeo síntoma→causa, usa también los bloques "Ejercicios de práctica" y "Del síntoma a la causa probable" de arriba — no se repiten aquí.)
+
+### 1. DevOps: qué es y qué no es
+- DevOps = cultura + prácticas + herramientas (todo el ciclo); CI/CD = prácticas técnicas del pipeline — CI/CD es parte de DevOps, no lo mismo.
+- CALMS (Culture, Automation, Lean, Measurement, Sharing); Tres Vías (Flujo, Retroalimentación, Aprendizaje continuo).
+- 4 métricas DORA: frecuencia de despliegue + *lead time* (velocidad); tasa de fallo de cambios + tiempo de recuperación (estabilidad) — los mejores equipos destacan en ambas, no son opuestas.
+- En embebido, "frecuencia de despliegue" se adapta (liberación a banco o a flota de validación, no a producción diaria).
+
+### 2. DevOps aplicado a software embebido
+- Lo que cambia vs software de servicio: despliegue controlado/regulado, hardware escaso (HIL), seguridad funcional central, reversión costosa (reflasheo/OTA), evidencia formal (ASPICE).
+- Lo que sí se adapta bien: validación virtual (vECU), pipelines con evidencia automática, IaC para bancos, OTA como entrega continua, telemetría de flota.
+- SDV (vehículo definido por software) exige procesos DevOps maduros adaptados a seguridad funcional y ciberseguridad.
+
+### 3. Prácticas DevOps en profundidad
+- IaC: declarativa (describes el estado deseado, ej. Terraform) vs imperativa (describes los pasos); **idempotencia** = aplicar la misma configuración varias veces da el mismo resultado.
+- Estrategias de liberación: rolling / blue-green (reversión casi instantánea) / canary (expone a un % pequeño primero) / feature flags (separa desplegar de liberar) — una campaña OTA por fases es un *canary*; el dual-bank de Flash es el *blue/green* embebido.
+- Monitoreo (saber **si** algo está mal) vs observabilidad (poder preguntar **por qué**); 3 pilares (logs/métricas/trazas); 4 señales doradas (latencia/tráfico/errores/saturación).
+- SLI (medida) → SLO (objetivo) → SLA (compromiso contractual); presupuesto de error = 1 − SLO.
+- DevSecOps: SAST/DAST/SCA, SBOM (inventario de componentes) y las normas ISO/SAE 21434 / UN R155 son automatizables en el pipeline.
+
+### 4. Cómputo en la nube: conceptos fundamentales
+- IaaS (gestionas desde el SO) → PaaS (solo app y datos) → FaaS (solo la función) → SaaS (solo el uso) — mientras más arriba en la pila, menos controlas.
+- Responsabilidad compartida: el proveedor cubre la seguridad **de** la nube; el cliente, la seguridad **en** la nube — la mayoría de brechas son mala configuración del cliente.
+- Región (varios centros de datos) vs zona de disponibilidad (aislados dentro de una región); RPO (pérdida de datos tolerable) vs RTO (tiempo caído tolerable).
+- Almacenamiento de objeto (logs/artefactos), de bloque (discos de una máquina) o de archivo (compartido) — cada uno con su caso de uso.
+
+### 5. Contenedores y orquestación (Kubernetes)
+- Pod = unidad mínima desplegable; Deployment = réplicas + *rolling update*; Service = acceso estable con balanceo; ConfigMap/Secret separan configuración de la imagen.
+- Modelo declarativo: describes el estado deseado y el sistema lo mantiene (reinicia lo que falla).
+- Monolito (más simple, menor autonomía) vs microservicios (escalado por servicio, mayor complejidad operativa y de pruebas) — no hay una opción universalmente mejor.
+
+### 6. La nube en el flujo de pruebas automotrices
+- HIL **nunca** va a la nube (requiere hardware real y tiempo real local); SIL/vECU, simulación de escenarios ADAS, logs y entornos efímeros **sí**.
+- Modelo híbrido típico: bancos HIL en laboratorio conectados al pipeline y a la plataforma de datos; todo lo demás aprovecha la elasticidad.
+- Una vECU permite probar antes de tener hardware y ejecutar en la nube; ASAM OpenSCENARIO/OpenDRIVE + simuladores ejecutan miles de escenarios ADAS en paralelo.
+
+### 7. La conexión vehículo ↔ nube
+- TCU/telemática conecta con el backend; MQTT para mensajería ligera; gemelos digitales alimentados por datos reales.
+- OTA: beneficio = corregir o añadir función sin taller; riesgos = autenticidad del paquete, seguridad funcional, energía durante la actualización, reversión (dual-bank), compatibilidad entre ECUs.
+- Marcos: Uptane (seguridad de actualizaciones), UN R156 (gestión de actualizaciones), UN R155 (ciberseguridad) — probar una OTA incluye verificar el proceso de actualización en sí (flasheo, rollback), no solo la función nueva.
+
+### 8. MLOps
+- MLOps = CI/CD + CT (entrenamiento continuo) + gestión de datos/modelos; ciclo: datos → entrenamiento → validación → registro → despliegue → monitoreo → reentrenamiento.
+- Monitoreo de deriva (*data drift* / *concept drift*); en automotriz se suma evidencia de seguridad (SOTIF, ISO/PAS 8800 emergente) y validación basada en escenarios.
+- Entrenamiento y simulación suelen ir en la nube; la inferencia suele ocurrir en el borde (el vehículo).
+
+### 9. Síntoma → causa (DevOps y nube)
+- La tabla de este capítulo (costos de nube disparados, pod que se reinicia, campaña OTA que deja vehículos inconsistentes) es el puente entre un síntoma de infraestructura/nube y su causa probable.
